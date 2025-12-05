@@ -1,7 +1,3 @@
----
-model: claude-sonnet-4-0
----
-
 # /plan
 
 **Purpose**: Transform a feature idea into an actionable implementation plan

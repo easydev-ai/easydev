@@ -1,7 +1,3 @@
----
-model: claude-sonnet-4-0
----
-
 # /docs-capture
 
 **Purpose**: Capture ideas, findings, or insights into clean, organized documentation

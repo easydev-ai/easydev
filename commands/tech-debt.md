@@ -1,7 +1,3 @@
----
-model: claude-sonnet-4-0
----
-
 # /tech-debt
 
 **Purpose**: Assess technical debt with severity scoring and prioritized remediation plan

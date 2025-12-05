@@ -1,7 +1,3 @@
----
-model: claude-sonnet-4-0
----
-
 # /standup
 
 **Purpose**: Generate standup notes from git activity

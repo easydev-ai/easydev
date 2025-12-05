@@ -1,7 +1,3 @@
----
-model: claude-sonnet-4-0
----
-
 # /pr-enhance
 
 **Purpose**: Auto-generate comprehensive PR description and checklist

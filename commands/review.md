@@ -1,7 +1,3 @@
----
-model: claude-sonnet-4-0
----
-
 # /review
 
 **Purpose**: Multi-perspective code review with design doc compliance checking

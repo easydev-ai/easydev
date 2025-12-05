@@ -1,7 +1,3 @@
----
-model: claude-sonnet-4-0
----
-
 # /subagents
 
 **Purpose**: Execute multiple tasks in parallel using subagents via the Task tool

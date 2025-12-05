@@ -1,7 +1,3 @@
----
-model: claude-sonnet-4-0
----
-
 # /docs-audit
 
 **Purpose**: Find duplicate/messy docs and propose consolidation

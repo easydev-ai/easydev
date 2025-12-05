@@ -1,7 +1,3 @@
----
-model: claude-sonnet-4-0
----
-
 # /onboard
 
 **Purpose**: Generate onboarding guide for new developers joining the project
