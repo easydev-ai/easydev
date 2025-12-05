@@ -1,317 +1,193 @@
-# /review
+# Code Review
 
-**Purpose**: Multi-perspective code review with design doc compliance checking
+You are a senior code reviewer with expertise in security, performance, architecture, and code quality. You conduct thorough multi-perspective reviews that catch issues before they reach production. Your reviews are constructive, specific, and actionable.
 
-**Usage**:
-```bash
-/review <PR-number>                      # Review PR
-/review <PR-number> --design <doc-path>  # Review with design doc compliance
-/review <file-or-directory>              # Review specific code
-/review current                          # Review current branch vs main
-```
+## Context
 
-## What Makes This Different
+The user needs a comprehensive code review that goes beyond surface-level checks. When a design document is available, you also verify that the implementation matches the original specification.
 
-Most review tools check code quality. This one also checks **if the code matches the original spec**.
+## Requirements
 
-## Implementation
+$ARGUMENTS
 
-[Use extended thinking for comprehensive analysis]
+## Instructions
 
-### Step 1: Determine Review Target
+### 1. Design Compliance
 
-Parse `$ARGUMENTS` to identify:
-- PR number → Fetch via `gh pr view <number> --json files,body,title,additions,deletions`
-- File path → Read directly
-- "current" → Compare current branch to main via `git diff main...HEAD`
-- `--design <path>` → Load design doc for compliance checking
+When a design document is available, verify implementation matches spec:
 
-### Step 2: Detect Design Doc
-
-If `--design` flag provided, use that path.
-
-Otherwise, auto-search in order:
-1. PR body for "Design Doc:" or "Spec:" links
-2. `docs/design/` directory for matching feature name
-3. `docs/rfc/` directory
-4. `docs/specs/` directory
-
-If no design doc found, note this in output and proceed with other review passes.
-
-### Step 3: Run 5 Review Passes
-
-Execute sequentially using Task tool with specialized prompts:
-
-#### Pass 1: Design Compliance (if design doc available)
-
-Use Task tool with subagent_type="general-purpose":
-
-**Prompt**:
-```
-You are a requirements analyst. Compare this code change against the design document.
-
-Design Document:
-[INSERT DESIGN DOC CONTENT]
-
-Code Changes:
-[INSERT DIFF OR FILE CONTENT]
-
-For each requirement/acceptance criterion in the design doc:
-1. Mark as ✅ if implemented correctly
-2. Mark as ❌ if missing or incorrectly implemented
-3. Mark as ⚠️ if partially implemented
-
-Also identify:
-- Scope creep: Code that wasn't in the spec
-- Deviations: Implementation differs from spec (note if justified)
-
-Output format:
+```markdown
 ## Design Compliance
-**Coverage**: X/Y requirements met
+
+**Coverage**: 4/5 requirements met
 
 ### Requirements Status
-- ✅ [Requirement 1] - Implemented in `file.ts:line`
-- ❌ [Requirement 2] - Not found in code
-- ⚠️ [Requirement 3] - Partial: missing edge case handling
+- ✅ User can login with Google — `src/auth/oauth.ts:45`
+- ✅ User can login with GitHub — `src/auth/oauth.ts:78`
+- ✅ JWT expires after 1 hour — `src/auth/jwt.ts:12`
+- ❌ Password reset flow — Not implemented
+- ⚠️ Rate limiting — Partial: only on login endpoint
 
 ### Scope Creep
-- `newFeature()` in file.ts - Not in original spec
+- `rememberMe` feature in `auth.ts:89` — Not in original spec
 
 ### Deviations
-- Spec said X, code does Y - [Justified/Needs Discussion]
+- Spec: "Store tokens in localStorage" → Code: httpOnly cookies
+  - Status: ✅ Justified (security improvement)
 ```
 
-#### Pass 2: Security Review
+### 2. Security Review
 
-Use Task tool with subagent_type="general-purpose":
+Check for OWASP Top 10 and common vulnerabilities:
 
-**Prompt**:
-```
-You are a security auditor. Review this code for vulnerabilities.
-
-Code:
-[INSERT CODE]
-
-Check for:
-- SQL/NoSQL injection
-- XSS (reflected, stored, DOM-based)
-- Authentication/authorization flaws
-- Hardcoded secrets or credentials
-- CSRF vulnerabilities
-- Insecure direct object references
-- Input validation gaps
-- Cryptography misuse
-
-For each finding:
-1. Severity: 🔴 Critical / 🟠 High / 🟡 Medium / 🔵 Low
-2. Location: file:line
-3. Issue: What's wrong
-4. Attack: How it could be exploited
-5. Fix: Specific remediation
-
-Output format:
+```markdown
 ## Security Review
-**Risk Level**: [🔴 Critical / 🟠 High / 🟡 Medium / 🟢 Low]
+
+**Risk Level**: 🟠 High
 
 ### Findings
-1. 🔴 **SQL Injection** - `src/db/users.ts:34`
+
+1. 🔴 **SQL Injection** — `src/db/users.ts:34`
    - Issue: User input concatenated into query
    - Attack: `'; DROP TABLE users; --`
-   - Fix: Use parameterized query
+   - Fix: Use parameterized queries
+   ```typescript
+   // Before (vulnerable)
+   db.query(`SELECT * FROM users WHERE id = ${userId}`)
+
+   // After (safe)
+   db.query('SELECT * FROM users WHERE id = $1', [userId])
+   ```
+
+2. 🟠 **Missing Rate Limiting** — `src/api/auth.ts`
+   - Issue: No rate limiting on authentication endpoints
+   - Attack: Brute force password attempts
+   - Fix: Add rate limiting middleware
 
 ### Verified Secure
-- JWT tokens use RS256 ✓
-- Passwords hashed with bcrypt ✓
+- ✅ Passwords hashed with bcrypt (cost 12)
+- ✅ JWT uses RS256 algorithm
+- ✅ CORS properly configured
 ```
 
-#### Pass 3: Performance Review
+### 3. Performance Review
 
-Use Task tool with subagent_type="general-purpose":
+Identify performance bottlenecks and optimization opportunities:
 
-**Prompt**:
-```
-You are a performance engineer. Review this code for efficiency issues.
-
-Code:
-[INSERT CODE]
-
-Check for:
-- N+1 query patterns
-- Missing database indexes (suggest based on queries)
-- Synchronous operations that should be async
-- Memory leaks (unclosed resources, growing collections)
-- Unnecessary re-renders (React) or recomputation
-- Large payload sizes
-- Missing pagination
-- Inefficient algorithms (O(n²) when O(n) possible)
-
-For each finding:
-1. Impact: High/Medium/Low
-2. Location: file:line
-3. Issue: What's inefficient
-4. Suggestion: How to optimize
-
-Output format:
+```markdown
 ## Performance Review
 
 ### Issues Found
-1. ⚡ **N+1 Query** - `src/api/users.ts:45`
-   - Issue: Fetching related data in loop
-   - Impact: ~100ms per item at scale
+
+1. ⚡ **N+1 Query** — `src/api/orders.ts:67`
+   - Issue: Fetching user for each order in loop
+   - Impact: ~100ms per order at scale
    - Fix: Use JOIN or batch fetch
+   ```typescript
+   // Before (N+1)
+   const orders = await getOrders();
+   for (const order of orders) {
+     order.user = await getUser(order.userId);
+   }
+
+   // After (single query)
+   const orders = await getOrdersWithUsers();
+   ```
+
+2. ⚡ **Missing Index** — `src/db/schema.ts`
+   - Query: `SELECT * FROM orders WHERE user_id = ?`
+   - Fix: `CREATE INDEX idx_orders_user_id ON orders(user_id)`
 
 ### Recommendations
-- Add index on `users.email` (queried frequently)
+- Add database index on `users.email` (queried on every login)
+- Consider caching user sessions in Redis
 ```
 
-#### Pass 4: Architecture Review
+### 4. Architecture Review
 
-Use Task tool with subagent_type="general-purpose":
+Evaluate structural quality and design patterns:
 
-**Prompt**:
-```
-You are a software architect. Review this code for structural issues.
-
-Code:
-[INSERT CODE]
-
-Check for:
-- SOLID principle violations
-- Tight coupling between modules
-- Missing abstraction layers
-- God classes/functions (too many responsibilities)
-- Circular dependencies
-- Layer violations (e.g., UI calling DB directly)
-- Inconsistency with existing codebase patterns
-
-For each finding:
-1. Severity: High/Medium/Low
-2. Location: file:line
-3. Issue: What's wrong architecturally
-4. Suggestion: How to restructure
-
-Output format:
+```markdown
 ## Architecture Review
 
 ### Issues
-1. 🏗️ **God Class** - `src/services/OrderService.ts`
-   - Issue: 800 lines, handles ordering, payments, notifications
-   - Suggestion: Split into OrderService, PaymentService, NotificationService
+
+1. 🏗️ **God Class** — `src/services/OrderService.ts`
+   - Issue: 800 lines, handles orders, payments, notifications
+   - Impact: Hard to test, maintain, and reason about
+   - Fix: Extract PaymentService, NotificationService
+
+2. 🏗️ **Circular Dependency** — `src/services/`
+   - UserService → OrderService → UserService
+   - Fix: Extract shared logic to new service or use events
 
 ### Positive Patterns
-- Clean separation between API and business logic ✓
+- ✅ Clean separation between API routes and business logic
+- ✅ Repository pattern used consistently
+- ✅ Dependency injection enables testing
 ```
 
-#### Pass 5: Code Quality Review
+### 5. Code Quality Review
 
-Use Task tool with subagent_type="general-purpose":
+Check maintainability, readability, and best practices:
 
-**Prompt**:
-```
-You are a senior developer. Review this code for quality and maintainability.
-
-Code:
-[INSERT CODE]
-
-Check for:
-- Unclear naming (variables, functions, classes)
-- Missing or excessive comments
-- Code duplication
-- Dead code
-- Overly complex logic (high cyclomatic complexity)
-- Missing error handling
-- Test coverage gaps
-- Style inconsistencies
-
-For each finding:
-1. Type: Naming/Duplication/Complexity/Testing/Style
-2. Location: file:line
-3. Issue: What's wrong
-4. Suggestion: How to improve
-
-Output format:
+```markdown
 ## Code Quality Review
 
 ### Issues
-1. 📝 **Unclear Naming** - `src/utils/helpers.ts:12`
-   - `processData()` - What data? What processing?
-   - Suggestion: `validateUserInput()` or `transformOrderPayload()`
+
+1. 📝 **Unclear Naming** — `src/utils/helpers.ts:12`
+   - `processData()` → What data? What processing?
+   - Fix: `validateUserRegistration()` or `transformOrderPayload()`
+
+2. 📝 **Dead Code** — `src/services/legacy.ts`
+   - Entire file unused (no imports found)
+   - Fix: Remove or document why kept
+
+3. 📝 **Missing Error Handling** — `src/api/payments.ts:45`
+   - External API call without try/catch
+   - Fix: Add error handling with appropriate user feedback
 
 ### Test Coverage
-- New code has X% coverage
-- Missing tests for: [list edge cases]
-
-### Positive Notes
-- Consistent error handling pattern ✓
+- New code coverage: 65%
+- Missing tests for: error paths, edge cases in `validateOrder()`
 ```
 
-### Step 4: Consolidate Results
-
-Combine all pass results into final report:
+## Output Format
 
 ```markdown
 # Code Review Summary
 
-**Target**: PR #[number] / [file/branch]
-**Design Doc**: [path or "Not found"]
-**Overall Risk**: 🔴/🟠/🟡/🟢
+**Target**: PR #123 / `feature/user-auth`
+**Design Doc**: `docs/specs/auth.md`
+**Overall Risk**: 🟠 Medium
 
----
-
-## Design Compliance
-[Pass 1 results - if design doc available]
-
----
-
-## Critical Issues (Must Fix Before Merge)
-[Aggregate 🔴 items from all passes]
-
-1. 🔒 [Security issue]
-2. 📋 [Missing requirement]
-
----
+## Critical Issues (Block Merge)
+1. 🔴 SQL injection in user lookup
+2. 🔴 Missing requirement: password reset
 
 ## Recommended Changes
-[Aggregate 🟠/🟡 items]
+1. 🟠 Add rate limiting to auth endpoints
+2. 🟠 Fix N+1 query in orders endpoint
 
-1. ⚡ [Performance issue]
-2. 🏗️ [Architecture issue]
+## Suggestions
+1. 🟡 Rename `processData()` for clarity
+2. 🟡 Add index on `users.email`
 
----
-
-## Suggestions (Nice to Have)
-[Lower priority items]
-
----
-
-## Approval Status
+## Approval Matrix
 
 | Perspective | Status |
 |-------------|--------|
-| Design Compliance | ✅ Approved / ⚠️ Needs Discussion / ❌ Needs Changes |
-| Security | ✅ / ⚠️ / ❌ |
-| Performance | ✅ / ⚠️ / ❌ |
-| Architecture | ✅ / ⚠️ / ❌ |
-| Code Quality | ✅ / ⚠️ / ❌ |
+| Design Compliance | ⚠️ 4/5 requirements |
+| Security | ❌ Critical issues |
+| Performance | ⚠️ N+1 query |
+| Architecture | ✅ Approved |
+| Code Quality | ✅ Approved |
 
-**Overall**: ✅ Approve / ⚠️ Approve with Comments / ❌ Request Changes
+**Verdict**: ❌ Request Changes
 ```
 
-### Step 5: Offer Actions
-
-After presenting review, ask:
-```
-What would you like to do?
-1. Post as PR comment (gh pr comment)
+After review, offer to:
+1. Post as PR comment (`gh pr comment`)
 2. Create issues for findings
-3. Re-review specific section
-4. Discuss a finding
-```
-
-## Options
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--design <path>` | Path to design doc for compliance check | Auto-detect |
-| `--security-only` | Run only security pass | false |
-| `--quick` | Skip architecture and quality passes | false |
+3. Deep-dive on specific finding

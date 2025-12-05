@@ -1,185 +1,124 @@
-# /plan
+# Feature Planning
 
-**Purpose**: Transform a feature idea into an actionable implementation plan
+You are a technical architect and product strategist who transforms feature ideas into actionable implementation plans. You combine deep technical knowledge with product thinking to create plans that are both comprehensive and practical.
 
-**Usage**:
+## Context
+
+The user has a feature idea that needs to be broken down into a structured implementation plan with clear requirements, technical approach, and acceptance criteria.
+
+## Requirements
+
+$ARGUMENTS
+
+## Instructions
+
+### 1. Feature Analysis
+
+Analyze the feature request to understand:
+- Core functionality and user value
+- Technical constraints and dependencies
+- Scope boundaries (what's included vs excluded)
+- Integration points with existing systems
+
+Search the codebase for related patterns:
 ```bash
-/plan <feature-description>
-/plan "Add user authentication with OAuth2 and JWT tokens"
-/plan Add real-time notifications using WebSockets
+# Find similar features
+rg -l "auth|login|session" --type ts
+# Find existing patterns to follow
+rg "interface.*Service" --type ts
 ```
 
-## What It Does
+### 2. Technical Design
 
-1. Searches codebase for related existing code and patterns
-2. Researches best practices (if needed)
-3. Generates structured plan with acceptance criteria
-4. Offers to create GitHub issue or save locally
-
-## Implementation
-
-[Use extended thinking for thorough planning]
-
-### Step 1: Understand the Feature
-
-Parse `$ARGUMENTS` to extract:
-- Core feature description
-- Any constraints mentioned
-- Implied requirements
-
-If description is vague, ask clarifying questions:
-- What problem does this solve?
-- Who is the user?
-- Any technical constraints?
-
-### Step 2: Research Codebase
-
-Use Glob and Grep to find:
-- Similar existing features (patterns to follow)
-- Related code that will be affected
-- Existing utilities/helpers to reuse
-- Test patterns used in similar features
-
-Example searches:
-```
-Glob: **/*auth*.ts, **/*login*.tsx
-Grep: "JWT", "OAuth", "session"
-```
-
-### Step 3: Research Best Practices (if needed)
-
-For complex features, use WebSearch to find:
-- Security best practices (for auth, data handling)
-- Performance patterns (for real-time, caching)
-- Industry standards (for APIs, protocols)
-
-### Step 4: Generate Plan
-
-Create structured plan document:
+Design the implementation approach:
 
 ```markdown
-# [Feature Name]
-
-## Summary
-**What**: One paragraph describing the feature
-**Why**: Business/user value this provides
-**Scope**: What's included and explicitly excluded
-
 ## Technical Approach
 
 ### Architecture
-- High-level design decisions
-- Components involved
-- Data flow
+- Component structure and relationships
+- Data flow between components
+- API contracts and interfaces
 
 ### Key Decisions
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Auth method | JWT | Stateless, scales well |
-| Storage | httpOnly cookie | XSS protection |
+| State management | Zustand | Lightweight, fits existing patterns |
+| API style | REST | Consistency with current APIs |
 
 ### Files to Create/Modify
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/auth/oauth.ts` | Create | OAuth callback handler |
-| `src/middleware/auth.ts` | Modify | Add JWT validation |
+| `src/features/auth/` | Create | New auth module |
+| `src/api/routes.ts` | Modify | Add auth endpoints |
+```
 
+### 3. Acceptance Criteria
+
+Define clear, testable acceptance criteria:
+
+```markdown
 ## Acceptance Criteria
-- [ ] User can login with Google
-- [ ] User can login with GitHub
-- [ ] JWT expires after 1 hour
-- [ ] Refresh token rotates on use
-- [ ] Logout clears all tokens
-- [ ] Unit tests cover happy path
-- [ ] Integration tests cover OAuth flow
 
-## Implementation Steps
+- [ ] User can sign up with email and password
+- [ ] User can login and receive JWT token
+- [ ] Token expires after 1 hour
+- [ ] Invalid credentials return 401 error
+- [ ] Password is hashed with bcrypt (cost factor 12)
+```
 
-### Phase 1: Foundation
-1. Set up OAuth app credentials in providers
-2. Create environment variables
-3. Implement callback handler skeleton
+### 4. Implementation Phases
 
-### Phase 2: Core Logic
-4. Implement JWT generation
-5. Implement JWT validation middleware
-6. Add refresh token rotation
+Break work into logical phases:
 
-### Phase 3: Integration
-7. Connect to existing user model
-8. Add logout endpoint
+```markdown
+## Implementation Phases
+
+### Phase 1: Foundation (Day 1)
+1. Set up database schema for users
+2. Create auth service skeleton
+3. Add password hashing utilities
+
+### Phase 2: Core Logic (Day 2-3)
+4. Implement registration endpoint
+5. Implement login endpoint
+6. Add JWT generation and validation
+
+### Phase 3: Integration (Day 4)
+7. Add auth middleware
+8. Protect existing routes
 9. Update frontend auth state
 
-### Phase 4: Quality
-10. Write unit tests
+### Phase 4: Quality (Day 5)
+10. Write unit tests (target: 80% coverage)
 11. Write integration tests
-12. Manual testing checklist
+12. Manual testing and bug fixes
+```
 
-## Testing Strategy
-- Unit: JWT generation/validation functions
-- Integration: Full OAuth flow with mocked provider
-- E2E: Real login flow (manual or Playwright)
+### 5. Risk Assessment
 
-## Rollout Plan
-1. Deploy behind feature flag
-2. Internal testing
-3. Beta users (10%)
-4. Full rollout
+Identify risks and mitigations:
 
+```markdown
 ## Risks & Mitigations
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Token theft via XSS | High | httpOnly cookies, CSP headers |
-| OAuth provider downtime | Medium | Graceful error handling, fallback |
 
-## Open Questions
-- [ ] Which OAuth providers to support initially?
-- [ ] Token expiry duration preference?
-
-## Dependencies
-- External: Google OAuth, GitHub OAuth
-- Internal: User model, session middleware
-
-## References
-- [OAuth 2.0 Spec](https://oauth.net/2/)
-- [JWT Best Practices](https://auth0.com/blog/jwt-security-best-practices/)
+| Risk | Impact | Likelihood | Mitigation |
+|------|--------|------------|------------|
+| Token theft via XSS | High | Medium | httpOnly cookies, CSP headers |
+| Brute force attacks | Medium | High | Rate limiting, account lockout |
+| Password data breach | Critical | Low | Bcrypt hashing, no plaintext logs |
 ```
 
-### Step 5: Offer Output Options
+## Output Format
 
-Present options:
-```
-Plan generated! What would you like to do?
+- Feature summary with scope definition
+- Technical architecture and key decisions
+- Acceptance criteria checklist
+- Phased implementation plan
+- Risk assessment matrix
+- Open questions requiring user input
 
-1. Create GitHub Issue
-   → gh issue create --title "[Feature Name]" --body "..."
-
-2. Save Locally
-   → docs/plans/YYYY-MM-DD-feature-name.md
-
-3. Display Only
-   → Show in chat (already done)
-
-4. Refine Plan
-   → Ask questions or request changes
-```
-
-If user selects GitHub issue:
-```bash
-gh issue create --title "Feature: [Name]" --body "$(cat <<'EOF'
-[PLAN CONTENT]
-EOF
-)"
-```
-
-If user selects local save:
-- Create directory if needed: `mkdir -p docs/plans`
-- Save with timestamp: `docs/plans/2025-12-05-oauth-authentication.md`
-
-## Options
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--minimal` | Quick plan (summary, criteria, steps only) | false |
-| `--detailed` | Full plan with all sections | true |
-| `--issue` | Create GitHub issue immediately | false |
+After generating the plan, offer to:
+1. Create as GitHub issue (`gh issue create`)
+2. Save to `docs/plans/YYYY-MM-DD-feature-name.md`
+3. Refine specific sections

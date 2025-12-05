@@ -1,71 +1,87 @@
 # /standup
 
-**Purpose**: Generate standup notes from git activity
+You are a developer productivity assistant analyzing git activity and pull request data to generate concise, actionable standup notes. Your expertise lies in translating technical commit histories and PR states into clear communication formats suitable for team standups.
 
-**Usage**:
+## Context
+
+Developers need to quickly summarize their work activity for daily standups. This requires gathering commits, pull request status, branch work, and identifying blockers from git and GitHub activity.
+
+## Requirements
+
+$ARGUMENTS - Days to look back (default: 1)
+
+## Instructions
+
+### 1. Git Activity Analysis
+
+Analyze the developer's recent git history to identify completed work:
+
 ```bash
-/standup              # Yesterday's activity
-/standup 3            # Last 3 days
-/standup --slack      # Slack-friendly format
+# Get user commits from the specified timeframe
+git log --author="$(git config user.email)" --since="$ARGUMENTS days ago" --pretty=format:"%h %s" --no-merges
 ```
 
-## What It Does
+**Example Output**:
+- abc1234: Fixed token refresh bug
+- def5678: Implemented password reset flow
+- ghi9012: Updated API error handling
 
-1. Gets recent commits by current user
-2. Checks open/merged PRs
-3. Identifies current branch work
-4. Flags blockers (stale PRs, uncommitted changes)
+### 2. Pull Request Status
 
-## Implementation
-
-### Step 1: Get Git User Info
+Check both merged and open pull requests to understand delivery status:
 
 ```bash
-git config user.name
-git config user.email
-```
-
-### Step 2: Gather Activity Data
-
-Run these commands to collect data:
-
-**Recent commits** (default: 1 day, or $ARGUMENTS days):
-```bash
-git log --author="$(git config user.email)" --since="$DAYS days ago" --pretty=format:"%h %s" --no-merges
-```
-
-**Merged PRs** (requires gh cli):
-```bash
+# Merged PRs (completed work)
 gh pr list --author="@me" --state=merged --json number,title,mergedAt --limit 10
-```
 
-**Open PRs**:
-```bash
+# Open PRs (in-progress work)
 gh pr list --author="@me" --state=open --json number,title,createdAt,reviewDecision
 ```
 
-**Current branch**:
+**Example Output**:
+- Merged: PR #123 - OAuth2 implementation (merged yesterday)
+- Open: PR #126 - Password reset UI (awaiting review, 2 days old)
+- Open: PR #128 - API error handling (changes requested)
+
+### 3. Current Branch Work
+
+Identify work in progress on the current branch:
+
 ```bash
+# Current branch and commits ahead of main
 git branch --show-current
 git log main..HEAD --oneline
+git diff --stat main..HEAD
 ```
 
-**Uncommitted changes**:
+**Example Output**:
+- Branch: `feature/password-reset`
+- 3 commits ahead of main
+- +245/-12 lines across 8 files
+
+### 4. Blocker Detection
+
+Flag potential blockers that need team attention:
+
+- **Stale PRs**: Open PRs awaiting review for >2 days
+- **Changes Requested**: PRs with review feedback needing action
+- **Uncommitted Work**: Modified files on feature branches that should be committed
+
 ```bash
+# Check for uncommitted changes
 git status --porcelain
 ```
 
-### Step 3: Identify Blockers
+**Example Blockers**:
+- PR #126 awaiting review (2 days)
+- PR #128 has changes requested from code review
+- 3 uncommitted files on feature/password-reset
 
-Flag as blockers:
-- PRs awaiting review > 2 days
-- PRs with changes requested
-- Uncommitted changes on feature branch
+## Output Format
 
-### Step 4: Generate Output
+Deliver two standup formats:
 
-**Standard Format**:
-
+**Standard Markdown**:
 ```markdown
 # Standup - [Date]
 
@@ -89,8 +105,7 @@ Flag as blockers:
 - Waiting on DevOps for OAuth credentials
 ```
 
-**Slack Format** (if `--slack` flag):
-
+**Slack-Friendly Format** (concise, emoji-led):
 ```
 *Standup [Date]*
 
@@ -99,25 +114,4 @@ Flag as blockers:
 🚧 *Blocked:* PR #126 awaiting review (2d), need OAuth creds from DevOps
 ```
 
-### Step 5: Offer Actions
-
-```
-Standup generated! Options:
-1. Copy to clipboard
-2. Save to file (standup/YYYY-MM-DD.md)
-3. Post to Slack (if webhook configured)
-```
-
-## Options
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--slack` | Compact Slack-friendly format | false |
-| `--include-reviews` | Include PRs you reviewed | false |
-| `--no-blockers` | Skip blocker detection | false |
-
-## Notes
-
-- Requires `git` for commit history
-- Requires `gh` CLI for PR information (optional but recommended)
-- Works without GitHub - just shows git commits
+Both formats should be immediately shareable with no manual editing required.

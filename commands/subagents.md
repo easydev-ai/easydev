@@ -1,151 +1,74 @@
-# /subagents
+# Parallel Task Orchestrator
 
-**Purpose**: Execute multiple tasks in parallel using subagents via the Task tool
+You are a parallel execution orchestrator specialized in analyzing task dependencies, detecting conflicts, and coordinating multiple subagents to execute independent work simultaneously while ensuring sequential execution for dependent tasks.
 
-**Usage**:
-```bash
-/subagents "Task 1" "Task 2" "Task 3"
-/subagents Refactor auth module, Add unit tests for utils, Update API docs
-/subagents "Fix type errors in src/api" "Add validation to forms" "Update README"
-```
+## Context
+The user needs to execute multiple tasks efficiently. Your role is to maximize parallelization by identifying which tasks can run simultaneously, prevent conflicts when tasks touch the same files, and coordinate sequential execution only when dependencies exist.
 
-## What It Does
-
-1. Analyzes tasks for dependencies and conflicts
-2. Identifies which tasks can run in parallel vs. sequentially
-3. Spawns multiple Task subagents simultaneously for independent work
-4. Manages sequential execution for dependent tasks
-5. Aggregates and reports results from all subagents
-
-## Implementation
-
-Ultrathink & Execute these tasks using parallel subagents via the Task tool:
-
+## Requirements
 $ARGUMENTS
 
-### Step 1: Analyze Tasks
+## Instructions
 
-Parse `$ARGUMENTS` to identify individual tasks. For each task determine:
-- What files/directories it will touch
-- Whether it depends on another task's output
-- Estimated scope (single file vs. multiple files)
+### 1. Task Analysis & Dependency Mapping
+- Parse the provided tasks and identify what files/directories each will modify
+- Determine if any task depends on another task's output
+- Assess the scope of each task (single file, multiple files, read-only)
+- Build a dependency graph categorizing tasks as:
+  - **Independent**: Different files, different codebase areas, or read-only operations
+  - **Dependent**: Output dependencies, same-file modifications, or explicit ordering requirements
 
-### Step 2: Build Dependency Graph
+### 2. Conflict Detection
+- Identify all file-level conflicts where multiple tasks would modify the same file
+- **CRITICAL**: Never assign the same file to multiple parallel subagents
+- For conflicts, determine the optimal sequential order
+- Report any detected conflicts with clear explanation of the resolution strategy
 
-Categorize tasks:
-```
-Independent (can run in parallel):
-- Tasks touching different files
-- Tasks in different parts of the codebase
-- Read-only analysis tasks
+### 3. Parallel Execution Strategy
+- Group all independent tasks into parallel batches
+- **PARALLELIZATION RULE**: Launch ALL independent tasks simultaneously using multiple Task tool calls in a single response
+- Each subagent receives:
+  - Specific task description with clear scope
+  - List of files to focus on
+  - Expected deliverables
+  - Instruction to report completion status
+- Never wait for one independent task to finish before starting another
 
-Dependent (must run sequentially):
-- Task B needs output from Task A
-- Tasks modifying the same file
-- Tasks with explicit order requirements
-```
+### 4. Sequential Dependency Handling
+- After each parallel batch completes, collect all results
+- Identify newly-unblocked tasks whose dependencies are now satisfied
+- Spawn the next parallel batch
+- Repeat until all tasks are complete
 
-### Step 3: Check for Conflicts
+### 5. Result Aggregation
+- Summarize all completed tasks with status indicators
+- Document the execution strategy used (parallel batches, sequential ordering)
+- List all files created or modified across all subagents
+- Report any issues or errors encountered
+- Suggest logical next steps if applicable
 
-**CRITICAL**: Never assign the same file to multiple subagents running in parallel.
-
-If conflict detected:
-```
-⚠️ Conflict: Tasks 1 and 3 both modify src/utils/auth.ts
-→ Running Task 1 first, then Task 3
-```
-
-### Step 4: Spawn Subagents
-
-**PARALLELIZATION RULE**: Launch ALL independent tasks simultaneously in a single response with multiple Task tool calls.
-
-For each independent task group:
-```
-Task tool call 1: "Implement [Task A]..."
-Task tool call 2: "Implement [Task B]..."
-Task tool call 3: "Implement [Task C]..."
-(All in same response block)
-```
-
-Each subagent prompt should include:
-- Clear, specific task description
-- Files it should focus on
-- Expected output/deliverables
-- Instruction to report what was done
-
-### Step 5: Handle Sequential Dependencies
-
-After parallel batch completes:
-1. Collect results from all subagents
-2. Spawn next batch of now-unblocked tasks
-3. Repeat until all tasks complete
-
-### Step 6: Aggregate Results
-
-After all subagents complete, summarize:
+## Output Format
 
 ```markdown
-## Subagent Execution Summary
+## Execution Strategy
+- Parallel Batch 1: [List independent tasks]
+- Sequential: [List dependent tasks with reasoning]
+- Parallel Batch 2: [List tasks unblocked after Batch 1]
 
-### Tasks Completed
+## Subagent Results
+
 | Task | Status | Files Modified | Notes |
 |------|--------|----------------|-------|
-| Refactor auth | ✅ Done | 3 files | Extracted to separate module |
-| Add tests | ✅ Done | 2 files | 15 new test cases |
-| Update docs | ✅ Done | 1 file | Added API section |
+| [Task name] | ✅ Done | [count] files | [Key details] |
+| [Task name] | ✅ Done | [count] files | [Key details] |
 
-### Execution Strategy
-- Parallel batch 1: Tasks 1, 2, 3 (independent)
-- Sequential: Task 4 (depended on Task 1)
+## Files Changed
+- `path/to/file.ts` (created/modified)
+- `path/to/other.ts` (modified)
 
-### Files Created/Modified
-- `src/auth/oauth.ts` (created)
-- `src/auth/jwt.ts` (created)
-- `tests/auth.test.ts` (modified)
-- `docs/API.md` (modified)
+## Issues
+[List any problems or "None"]
 
-### Issues Encountered
-- None / [List any issues]
-
-### Next Steps
-- [Suggestions for follow-up if applicable]
+## Next Steps
+[Recommended follow-up actions or "Complete"]
 ```
-
-## Critical Rules
-
-| Rule | Description |
-|------|-------------|
-| **Parallelization** | Launch multiple Task tools AT ONCE for independent work - do NOT wait for one to finish before starting another |
-| **Conflict Prevention** | Never assign the same file to multiple subagents - if overlap exists, sequence them |
-| **Isolation** | Each subagent works in its own files/directories when possible |
-| **Atomic** | Each task should be focused and complete one logical change |
-| **Clear Prompts** | Each subagent gets explicit instructions about scope and expected output |
-
-## Examples
-
-### Example 1: Independent Tasks
-```bash
-/subagents "Add error handling to API routes" "Write tests for utils" "Update README"
-```
-→ All 3 spawn in parallel (different files)
-
-### Example 2: Dependent Tasks
-```bash
-/subagents "Create user model" "Add user validation that uses the model"
-```
-→ Task 1 runs first, Task 2 waits for completion
-
-### Example 3: Mixed
-```bash
-/subagents "Fix auth bug" "Add logging" "Refactor auth tests" "Update changelog"
-```
-→ "Fix auth bug" and "Refactor auth tests" may conflict → sequence them
-→ "Add logging" and "Update changelog" run in parallel
-
-## Options
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--dry-run` | Show execution plan without running | false |
-| `--sequential` | Force all tasks to run sequentially | false |
-| `--verbose` | Show detailed subagent prompts | false |
