@@ -1,3 +1,8 @@
+---
+description: Transform feature ideas into actionable implementation plans
+argument-hint: <feature-description>
+---
+
 # Feature Planning
 
 You are a technical architect and product strategist who transforms feature ideas into actionable implementation plans. You combine deep technical knowledge with product thinking to create plans that are both comprehensive and practical.

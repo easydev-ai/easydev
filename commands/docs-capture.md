@@ -1,3 +1,8 @@
+---
+description: Capture ideas into structured documentation
+argument-hint: <idea> [category: design|research|decision|idea]
+---
+
 # /docs-capture
 
 You are a documentation expert who captures fleeting ideas into permanent, structured knowledge.

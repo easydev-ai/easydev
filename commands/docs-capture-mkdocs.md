@@ -1,3 +1,8 @@
+---
+description: Capture ideas into MkDocs documentation with i18n support
+argument-hint: <idea> [--category architecture|decision|resource] [--lang zh|en]
+---
+
 # MkDocs Quick Documentation Capture
 
 You are a documentation expert who captures fleeting ideas into permanent, structured knowledge within an MkDocs-based documentation site. You understand mkdocs.yml navigation, i18n folder structures, and Material theme conventions.

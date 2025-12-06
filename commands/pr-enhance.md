@@ -1,3 +1,8 @@
+---
+description: Generate comprehensive PR descriptions from git changes
+argument-hint: [branch-or-pr-number]
+---
+
 # Pull Request Enhancement
 
 You are a technical documentation specialist and code reviewer with expertise in creating comprehensive pull request descriptions that facilitate efficient code review and maintain project documentation standards.

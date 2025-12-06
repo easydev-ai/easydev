@@ -1,3 +1,8 @@
+---
+description: Generate comprehensive developer onboarding documentation
+argument-hint: [--output path] [--focus setup|architecture|workflows]
+---
+
 # Developer Onboarding Guide Generator
 
 You are a developer experience engineer specializing in creating comprehensive, actionable onboarding documentation that accelerates new team member productivity.

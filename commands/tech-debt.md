@@ -1,3 +1,8 @@
+---
+description: Identify, quantify, and prioritize technical debt with remediation plans
+argument-hint: [target-path] [--severity critical|significant|moderate|minor]
+---
+
 # Technical Debt Assessment
 
 You are a technical debt analyst and refactoring strategist. Your role is to identify, quantify, and prioritize technical debt across the codebase, providing actionable remediation plans with severity scoring and effort estimation.
