@@ -4,39 +4,21 @@ You are a senior code reviewer with expertise in security, performance, architec
 
 ## Context
 
-The user needs a comprehensive code review that goes beyond surface-level checks. When a design document is available, you also verify that the implementation matches the original specification.
+The user needs a comprehensive code review that goes beyond surface-level checks. This review focuses on code quality across four perspectives: security, performance, architecture, and code quality.
+
+**Note**: For checking if code aligns with a design document, use `/design-sync` instead. That command handles bidirectional alignment (code→doc or doc→code).
 
 ## Requirements
 
-$ARGUMENTS
+```
+$ARGUMENTS:
+  - target (optional): PR number, branch name, or file path (default: current changes)
+  - focus (optional): security | performance | architecture | quality | all (default: all)
+```
 
 ## Instructions
 
-### 1. Design Compliance
-
-When a design document is available, verify implementation matches spec:
-
-```markdown
-## Design Compliance
-
-**Coverage**: 4/5 requirements met
-
-### Requirements Status
-- ✅ User can login with Google — `src/auth/oauth.ts:45`
-- ✅ User can login with GitHub — `src/auth/oauth.ts:78`
-- ✅ JWT expires after 1 hour — `src/auth/jwt.ts:12`
-- ❌ Password reset flow — Not implemented
-- ⚠️ Rate limiting — Partial: only on login endpoint
-
-### Scope Creep
-- `rememberMe` feature in `auth.ts:89` — Not in original spec
-
-### Deviations
-- Spec: "Store tokens in localStorage" → Code: httpOnly cookies
-  - Status: ✅ Justified (security improvement)
-```
-
-### 2. Security Review
+### 1. Security Review
 
 Check for OWASP Top 10 and common vulnerabilities:
 
@@ -70,7 +52,7 @@ Check for OWASP Top 10 and common vulnerabilities:
 - ✅ CORS properly configured
 ```
 
-### 3. Performance Review
+### 2. Performance Review
 
 Identify performance bottlenecks and optimization opportunities:
 
@@ -103,7 +85,7 @@ Identify performance bottlenecks and optimization opportunities:
 - Consider caching user sessions in Redis
 ```
 
-### 4. Architecture Review
+### 3. Architecture Review
 
 Evaluate structural quality and design patterns:
 
@@ -127,7 +109,7 @@ Evaluate structural quality and design patterns:
 - ✅ Dependency injection enables testing
 ```
 
-### 5. Code Quality Review
+### 4. Code Quality Review
 
 Check maintainability, readability, and best practices:
 
@@ -159,12 +141,10 @@ Check maintainability, readability, and best practices:
 # Code Review Summary
 
 **Target**: PR #123 / `feature/user-auth`
-**Design Doc**: `docs/specs/auth.md`
 **Overall Risk**: 🟠 Medium
 
 ## Critical Issues (Block Merge)
 1. 🔴 SQL injection in user lookup
-2. 🔴 Missing requirement: password reset
 
 ## Recommended Changes
 1. 🟠 Add rate limiting to auth endpoints
@@ -178,16 +158,21 @@ Check maintainability, readability, and best practices:
 
 | Perspective | Status |
 |-------------|--------|
-| Design Compliance | ⚠️ 4/5 requirements |
 | Security | ❌ Critical issues |
 | Performance | ⚠️ N+1 query |
 | Architecture | ✅ Approved |
 | Code Quality | ✅ Approved |
 
 **Verdict**: ❌ Request Changes
+
+---
+
+💡 **Tip**: To check alignment with a design document, run:
+`/design-sync path/to/design-doc.md`
 ```
 
 After review, offer to:
 1. Post as PR comment (`gh pr comment`)
 2. Create issues for findings
 3. Deep-dive on specific finding
+4. Fix critical issues automatically
