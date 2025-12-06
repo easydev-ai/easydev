@@ -26,6 +26,174 @@ $ARGUMENTS:
 
 ## Instructions
 
+### Phase 0: Research Planning & Parallelization
+
+Before executing any research, create an explicit execution plan that maximizes efficiency through parallel sub-agent execution.
+
+#### 0a. Initial Context Scan
+
+Quickly gather context to inform task planning:
+
+**From User Prompt**:
+- Extract the core research goal
+- Identify any constraints or preferences mentioned
+- Note specific technologies, services, or approaches referenced
+
+**From Codebase** (quick scan if `--context` or if in a project directory):
+- Detect primary language/framework (package.json, requirements.txt, go.mod, etc.)
+- Identify infrastructure patterns (serverless, containers, monolith)
+- Note existing integrations that may be relevant
+
+#### 0b. Research Task Decomposition
+
+Break the research goal into discrete, parallelizable research tasks:
+
+```markdown
+## Research Task Plan
+
+**Goal**: [Restated research goal]
+
+| Task ID | Research Task | Type | Dependencies | Agent Type |
+|---------|---------------|------|--------------|------------|
+| T1 | Analyze existing codebase patterns | codebase | none | Explore |
+| T2 | Search for existing solutions/libraries | web | none | general-purpose |
+| T3 | Research 2025 best practices | web | none | general-purpose |
+| T4 | Find case studies & implementations | web | none | general-purpose |
+| T5 | Evaluate security considerations | web/docs | T2 | general-purpose |
+| T6 | Assess compatibility with current stack | codebase | T1, T2 | Explore |
+```
+
+**Task Types**:
+- `codebase`: Analyze local files, patterns, dependencies
+- `web`: Search external sources, documentation, blogs
+- `docs`: Fetch and analyze specific documentation pages
+- `api`: Query package registries, GitHub APIs
+
+#### 0c. Dependency Analysis
+
+Map task dependencies to identify parallelization opportunities:
+
+```markdown
+## Dependency Graph
+
+**Independent Tasks** (can run in parallel):
+- T1: Codebase analysis — no dependencies
+- T2: Solution search — no dependencies
+- T3: Best practices research — no dependencies
+- T4: Case study search — no dependencies
+
+**Dependent Tasks** (must wait for predecessors):
+- T5: Security evaluation — needs T2 results (to know what to evaluate)
+- T6: Compatibility assessment — needs T1 + T2 (stack info + options)
+```
+
+#### 0d. Parallel Execution Plan
+
+Group independent tasks into waves for maximum parallelization. The number of sub-agents and waves should be determined dynamically based on:
+- The actual research tasks identified in 0b
+- Dependencies mapped in 0c
+- The complexity and scope of the research goal
+
+```markdown
+## Execution Plan
+
+### Wave 1: Foundation Research (Parallel)
+Launch all independent tasks simultaneously using Task tool with multiple sub-agents:
+
+| Sub-Agent | Task | Focus | Expected Output |
+|-----------|------|-------|-----------------|
+| Agent A | [Independent task 1] | [Focus area] | [Expected output] |
+| Agent B | [Independent task 2] | [Focus area] | [Expected output] |
+| ... | [Add as many as needed] | ... | ... |
+
+**Execution**: Single message with N parallel Task tool invocations (where N = number of independent tasks)
+
+### Wave 2+: Dependent Research (After Prerequisites Complete)
+Launch tasks that depend on Wave 1 results:
+
+| Sub-Agent | Task | Depends On | Focus |
+|-----------|------|------------|-------|
+| Agent X | [Dependent task] | [Prerequisite tasks] | [Focus area] |
+| ... | [Add as many as needed] | ... | ... |
+
+**Note**: Continue adding waves as needed until all tasks with dependencies are scheduled.
+
+### Final Wave: Synthesis
+Main agent synthesizes all sub-agent findings into final report.
+
+---
+
+**Parallelization Summary**:
+- Total tasks: [calculated from 0b]
+- Parallel waves: [calculated from dependency graph]
+- Independent tasks in Wave 1: [count]
+- Estimated time savings: [based on parallelization ratio]
+```
+
+#### 0e. Sub-Agent Prompt Templates
+
+When launching parallel sub-agents, use focused prompts:
+
+**Codebase Analysis Agent**:
+```
+Analyze this codebase for: [specific aspect]
+Return:
+1. Relevant findings (bullet points)
+2. Constraints identified
+3. Patterns that affect [research goal]
+Do NOT make recommendations—just report findings.
+```
+
+**Web Research Agent**:
+```
+Research: [specific topic]
+Search for: [specific queries]
+Return:
+1. Top 3-5 options found with metadata (stars, last update, license)
+2. Key differentiators between options
+3. Red flags or concerns noted
+4. Source URLs for each finding
+```
+
+**Documentation Agent**:
+```
+Fetch and analyze: [specific docs URL or topic]
+Extract:
+1. Recommended approach per official docs
+2. Configuration requirements
+3. Known limitations or caveats
+4. Version compatibility notes
+```
+
+#### 0f. Present Execution Plan
+
+Before executing, present the plan for confirmation (skip for quick depth):
+
+```markdown
+## 🗺️ Research Execution Plan
+
+**Goal**: [Research goal]
+**Depth**: [quick | standard | deep]
+**Parallelization Strategy**: [X] tasks across [Y] waves
+
+### Wave 1 — Parallel Foundation ([N] sub-agents)
+[List all independent tasks identified in 0c]
+
+### Wave 2+ — Dependent Analysis
+[List dependent tasks grouped by wave, showing prerequisites]
+
+### Final Wave — Synthesis
+- 📊 Combine findings into final report
+
+**Estimated Efficiency**: [Calculate based on parallelization ratio]
+
+---
+
+**Proceed with this execution plan?** (y/n/adjust)
+```
+
+---
+
 ### Phase 1: Context Understanding
 
 #### 1a. If `--context` flag is present:
@@ -468,6 +636,7 @@ Please specify or provide custom instructions.
 - No hidden killer deep-dive
 - Abbreviated comparison matrix
 - Sources: 2-3 per option max
+- **Parallelization**: Minimize waves, skip execution plan confirmation, prioritize speed
 
 ### Standard Depth (Default)
 - Full Tier 1-4 assessment
@@ -476,6 +645,7 @@ Please specify or provide custom instructions.
 - Hidden killers: top 3 categories
 - Complete comparison matrix
 - Sources: 3-5 per option
+- **Parallelization**: Present execution plan before starting, balance thoroughness with efficiency
 
 ### Deep Depth
 - All tiers with detailed notes
@@ -485,6 +655,7 @@ Please specify or provide custom instructions.
 - Weighted comparison with sensitivity analysis
 - Sources: 5+ per option, multiple source types
 - Include: long-term trajectory analysis, ecosystem health deep-dive
+- **Parallelization**: Detailed execution plan with intermediate checkpoints, maximize coverage
 
 ## Focus Area Adjustments
 
