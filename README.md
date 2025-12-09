@@ -118,6 +118,7 @@ cd ~/.claude/commands && git pull
 
 | Command | Purpose | Example |
 |---------|---------|---------|
+| `/research-evaluate <question>` | Deep research + codebase investigation with parallel sub-agents | `/research-evaluate Is API Gateway HTTP API applicable to us?` |
 | `/plan <feature>` | Idea → actionable implementation plan | `/plan Add OAuth2 with JWT tokens` |
 | `/review` | 4-perspective code quality review | `/review` |
 | `/design-sync <doc>` | Bidirectional code ↔ design doc alignment | `/design-sync docs/specs/auth.md` |
