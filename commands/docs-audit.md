@@ -1,379 +1,434 @@
 ---
-description: Audit documentation for duplicates, orphans, and structural issues
-argument-hint: [target-path] [--fix] [--focus duplicates|orphans|taxonomy|links]
+description: Audit documentation for duplicates, orphans, links, and structural issues (auto-detects MkDocs)
+argument-hint: [target-path] [--focus translations|nav|duplicates|links] [--lang zh|en]
 ---
 
 # Documentation Auditor
 
-You are a technical documentation auditor specializing in information architecture, content deduplication, and documentation health assessment. Your expertise includes semantic content analysis, link graph construction, taxonomy design, and documentation consolidation strategies.
+You are a technical documentation auditor who intelligently adapts to the documentation system in use. You detect whether the project uses MkDocs (by checking for `mkdocs.yml`) and adjust your analysis accordingly.
 
-## Context
+## Auto-Detection Logic
 
-Documentation sprawl creates maintenance overhead, knowledge fragmentation, and developer confusion. Over time, teams accumulate duplicate explanations, orphaned files, misplaced content, and broken cross-references. This audit identifies structural inefficiencies and proposes actionable consolidation paths.
+**FIRST**: Check if `mkdocs.yml` exists in the project root.
+
+- **If MkDocs detected**: Use MkDocs-aware analysis (i18n folder structures, nav validation, translation coverage)
+- **If no MkDocs**: Use generic documentation analysis (file-based auditing, link validation, duplicate detection)
+
+## Context (MkDocs Mode)
+
+MkDocs documentation sites have unique structural requirements: navigation defined in mkdocs.yml, language folders for i18n, and specific plugin expectations. Standard documentation audits produce false positives (flagging translations as duplicates) and miss MkDocs-specific issues (nav orphans, translation gaps). This audit understands MkDocs conventions.
+
+## Context (Generic Mode)
+
+Generic documentation auditing focuses on file organization, duplicate content detection, broken links, and orphan file identification without assuming a specific documentation framework.
 
 ## Requirements
 
 ```
 $ARGUMENTS:
-  - target_path (optional): Directory to audit (default: all markdown files)
-  - fix_mode (optional): Auto-fix simple issues with confirmation (default: false)
-  - focus_area (optional): duplicates|orphans|taxonomy|links (default: all)
+  - target_path (optional): Directory to audit (default: docs/)
+  - focus_area (optional): translations|nav|duplicates|links|all (default: all)
+  - primary_lang (optional): Primary language code (default: zh)
 ```
 
 ## Instructions
 
-### 1. Content Inventory & Analysis
+### 1. MkDocs Configuration Analysis
 
-Scan all markdown files and extract:
-- **File metadata**: Path, title (first H1), word count, last modified timestamp
-- **Link topology**: Outgoing links (references TO other docs), incoming links (references FROM other docs)
-- **Content fingerprints**: Hash for exact duplicate detection, normalized text for near-duplicate detection
-- **Topic classification**: Design spec, how-to guide, API reference, meeting notes, configuration reference
+First, read and parse `mkdocs.yml`:
 
-Examples:
+**Extract:**
+- `nav:` structure (explicit navigation tree)
+- `plugins:` especially i18n configuration
+- `theme:` settings and features
+- Language folders and default language
+
+**Example analysis:**
 ```
-docs/authentication.md → 1,247 words, modified 2024-11-15
-  Outgoing: [docs/api/auth-endpoints.md, docs/setup.md]
-  Incoming: [README.md, docs/guides/quickstart.md]
-  Classification: How-to guide
-
-docs/auth-setup.md → 1,198 words, modified 2024-03-10
-  Outgoing: [docs/api/auth-endpoints.md]
-  Incoming: []
-  Classification: How-to guide
-  ⚠️ 89% content similarity with docs/authentication.md
+mkdocs.yml detected:
+├── Nav: Explicitly defined (4 sections, 18 pages)
+├── Languages: zh (default), en
+├── Plugins: search, i18n, mermaid2
+└── Theme: material with dark/light toggle
 ```
 
-### 2. Duplication Detection
+### 2. Translation Coverage Analysis
 
-Identify three duplication types:
+For each language folder, build a file inventory and compare:
 
-**Exact Duplicates**: Files with identical content hashes
-- Action: Delete redundant copy, preserve canonical version
+**Translation Pair Detection:**
+- Match files by relative path: `zh/decisions/0001-*.md` ↔ `en/decisions/0001-*.md`
+- These are TRANSLATION PAIRS, not duplicates
+- Flag MISSING translations, not matching ones
 
-**Near Duplicates**: Files with >80% normalized content similarity
-- Compare after lowercasing, whitespace removal, and punctuation normalization
-- Action: Merge or consolidate with clear versioning
-
-**Semantic Duplicates**: Different words, same concept
-- Use semantic comparison: "Do these documents explain the same concept?"
-- Examples: "JWT Authentication" vs "Token-Based Auth Setup"
-- Action: Merge into comprehensive single source, add cross-references
-
-### 3. Orphan Document Analysis
-
-Build link graph to identify isolated content:
-- **Orphans**: Files with zero incoming links (excluding README.md, index.md, CHANGELOG.md)
-- **Dead-ends**: Files with zero outgoing links
-- **Disconnected clusters**: Groups of docs linking only to each other
-
-Examples:
+**Coverage Report:**
 ```
-docs/old-architecture.md
-  Incoming: 0 | Outgoing: 0 | Last modified: 8 months ago
-  → Candidate for archival
+## Translation Coverage: zh → en
 
-docs/brainstorm-sessions/
-  3 files, only link to each other, no external incoming links
-  → Consider moving to archive/ or linking from main docs
+| zh File | en Translation | Status |
+|---------|---------------|--------|
+| architecture/overview.md | ✅ exists | Synced |
+| decisions/0001-multi-repo.md | ✅ exists | Synced |
+| decisions/0007-new-decision.md | ❌ missing | Needs translation |
+
+Coverage: 17/18 files (94%)
+Missing: 1 file needs English translation
 ```
 
-### 4. Taxonomy & Placement Validation
+### 3. Navigation Orphan Analysis
 
-Verify content is in appropriate directories:
+Compare files against `mkdocs.yml` nav:
+
+**Nav Orphans**: Files that exist but aren't in nav
+- These won't appear in sidebar navigation
+- Still accessible via direct URL
+- May be intentional (drafts) or accidental
+
+**Phantom Nav Entries**: Nav entries pointing to non-existent files
+- These will cause build errors
+- Must be fixed before deployment
+
+**Example:**
+```
+## Navigation Analysis
+
+### Files Not in Nav (Orphans)
+| File | Last Modified | Assessment |
+|------|---------------|------------|
+| docs/zh/drafts/wip-feature.md | 2 days ago | Likely intentional draft |
+| docs/zh/old-notes.md | 8 months ago | Candidate for deletion |
+
+### Broken Nav Entries
+| Nav Path | Points To | Issue |
+|----------|-----------|-------|
+| 架构/性能优化 | architecture/performance.md | File not found |
+
+Recommendation: Run `mkdocs build --strict` to catch nav errors
+```
+
+### 4. Content Duplication Analysis (MkDocs-Aware)
+
+**IMPORTANT**: Exclude translation pairs from duplicate detection.
+
+**True Duplicates** (flag these):
+- Same-language files with identical/similar content
+- Example: `zh/guide/setup.md` ≈ `zh/getting-started.md`
+
+**Translation Pairs** (DO NOT flag):
+- Cross-language files that SHOULD have similar content
+- Example: `zh/overview.md` ↔ `en/overview.md`
+
+**Near-Duplicate Detection:**
+```
+## Same-Language Duplicates
+
+| Similarity | File 1 | File 2 | Recommendation |
+|------------|--------|--------|----------------|
+| 87% | zh/architecture/data-flow.md | zh/resources/data-overview.md | Merge or differentiate |
+
+Note: 18 translation pairs detected and excluded from duplicate analysis
+```
+
+### 5. Link Health Check
+
+Validate markdown links considering MkDocs conventions:
+
+**Internal Links:**
+- Relative paths (`../decisions/0001.md`)
+- Should work after build transformation
+
+**Cross-Language Links:**
+- Links from zh/ to en/ or vice versa (usually unintentional)
+
+**External Links:**
+- HTTP/HTTPS URLs
+- May be stale or broken
+
+**Example:**
+```
+## Link Health
+
+### Broken Internal Links
+| Source | Line | Link | Issue |
+|--------|------|------|-------|
+| zh/index.md | 23 | ./old-page.md | File moved/deleted |
+
+### Cross-Language Links (Review)
+| Source | Link | Note |
+|--------|------|------|
+| zh/resources/comparison.md | ../en/appendix.md | Intentional? |
+
+### External Links (Unchecked)
+- 12 external links found
+- Run: `markdown-link-check docs/` for validation
+```
+
+### 6. MkDocs Build Validation
+
+Suggest build validation commands:
+
+```
+## Build Validation
+
+Run these commands to catch issues:
+
+# Strict build (fails on warnings)
+mkdocs build --strict
+
+# Serve locally with live reload
+mkdocs serve
+
+# Check all markdown links
+markdown-link-check docs/**/*.md
+```
+
+### 7. ADR-Specific Analysis
+
+If `decisions/` folder exists, analyze ADR health:
+
+**ADR Numbering:**
+- Check for gaps in sequence (0001, 0002, 0004 — missing 0003?)
+- Check for duplicates (two 0005s?)
+- Identify next available number
+
+**ADR Status:**
+- Track status distribution (accepted, deprecated, superseded)
+- Flag outdated decisions
+
+**Example:**
+```
+## ADR Analysis
+
+Current ADRs: 6 (0001-0006)
+Next available: 0007
+
+Status Distribution:
+- 已接受 (Accepted): 6
+- 已废弃 (Deprecated): 0
+- 已取代 (Superseded): 0
+
+Sequence: ✅ No gaps detected
+```
+
+### 8. Taxonomy Validation
+
+Verify content is in appropriate directories based on MkDocs Material conventions:
 
 | Directory | Expected Content | Red Flags |
 |-----------|------------------|-----------|
-| `docs/design/` | Architecture decisions, technical specs, RFCs | Meeting notes, how-to guides |
-| `docs/guides/` | Step-by-step tutorials, onboarding | API reference, design specs |
-| `docs/api/` | Endpoint documentation, SDK reference | General explanations, tutorials |
-| `docs/reference/` | Configuration options, CLI commands | Conceptual guides |
-| `docs/meeting-notes/` | Discussion summaries, decisions | Technical specifications |
+| `architecture/` | Technical design, system diagrams | Meeting notes, tutorials |
+| `decisions/` | ADRs with proper numbering | Non-ADR content |
+| `resources/` | Reference material, comparisons | Step-by-step guides |
+| `guides/` (if exists) | Tutorials, how-tos | Architecture specs |
 
-Classify each file and flag misplacements:
-```
-docs/design/standup-jan-15.md
-  Type: Meeting notes
-  Location: design/
-  ⚠️ Should be: meeting-notes/
-```
-
-### 5. Link Health & Cross-Reference Gaps
-
-Detect broken references and missing connections:
-- **Broken links**: References to moved/deleted files
-- **Outdated paths**: Links pointing to old locations
-- **Missing cross-references**: Related docs that should reference each other but don't
-
-Examples:
-```
-docs/README.md:23 → ./getting-started.md
-  ❌ File not found (moved to docs/guides/getting-started.md)
-
-docs/api/users.md ↔ docs/database/user-schema.md
-  ⚠️ Related concepts, no cross-reference
-```
-
-### 6. Staleness Detection
+### 9. Staleness Detection
 
 Identify potentially outdated content:
-- Last modified >6 months ago
-- References to deprecated technologies, old versions
-- Links to deleted files or archived repositories
-- Content contradicting newer documentation
 
-Mark as candidates for review or archival.
+**Signals:**
+- Last modified >6 months ago
+- References to deprecated technologies
+- ADRs marked as superseded but still prominent
+- Translation significantly newer than source (source may be outdated)
 
 ## Output Format
 
-Provide a comprehensive audit report in this structure:
-
 ```markdown
-# Documentation Audit Report
+# MkDocs Documentation Audit Report
 
-**Audit Scope**: [path or "entire repository"]
+**Site**: [site_name from mkdocs.yml]
 **Audit Date**: YYYY-MM-DD
+**Primary Language**: zh
+**Languages**: zh, en
 **Total Files**: [count]
-**Issues Detected**: [count]
 **Documentation Health Score**: [0-100] ([Poor|Fair|Good|Excellent])
 
 ---
 
 ## Executive Summary
 
-| Issue Category | Count | Severity | Action Required |
-|----------------|-------|----------|-----------------|
-| Exact duplicates | [n] | High | Merge/delete |
-| Semantic duplicates | [n] | Medium | Review & consolidate |
-| Orphan documents | [n] | Medium | Link or archive |
-| Misplaced content | [n] | Low | Move to correct directory |
-| Broken links | [n] | High | Fix references |
-| Stale documents | [n] | Medium | Review & update |
+| Category | Status | Count | Action |
+|----------|--------|-------|--------|
+| Translation Coverage | ⚠️ | 94% (1 missing) | Translate 1 file |
+| Nav Orphans | ✅ | 0 files | None |
+| Same-Language Duplicates | ⚠️ | 1 pair | Review for merge |
+| Broken Links | ❌ | 3 links | Fix references |
+| ADR Health | ✅ | 6 ADRs, no gaps | None |
+| Stale Content | ⚠️ | 2 files >6mo | Review for updates |
 
-**Key Findings**:
-- [Top 1-3 most critical issues with impact assessment]
-
----
-
-## 1. Duplication Analysis
-
-### 1.1 Exact Duplicates
-
-| Content Hash | File 1 | File 2 | Size | Recommendation |
-|--------------|--------|--------|------|----------------|
-| `a3f2c1...` | `docs/auth.md` | `docs/guides/authentication.md` | 1.2KB | Keep `guides/authentication.md`, delete `docs/auth.md` |
-
-### 1.2 Near Duplicates (>80% Similarity)
-
-| Similarity | File 1 | File 2 | Differences | Recommendation |
-|------------|--------|--------|-------------|----------------|
-| 89% | `docs/setup.md` | `docs/installation.md` | Setup includes Docker, installation doesn't | Merge into `docs/guides/installation.md` with Docker section |
-
-### 1.3 Semantic Duplicates
-
-| Concept | Files | Words | Last Modified | Recommendation |
-|---------|-------|-------|---------------|----------------|
-| API Authentication | `docs/api/auth.md` (523w), `docs/security/api-tokens.md` (687w) | 2024-10, 2024-03 | Consolidate into `docs/api/authentication.md`, keep newer content, add security section |
+**Overall**: Documentation is in good health with minor translation and link issues.
 
 ---
 
-## 2. Orphan Documents
+## 1. MkDocs Configuration
 
-Files with no incoming links:
-
-| File | Size | Last Modified | Outgoing Links | Assessment |
-|------|------|---------------|----------------|------------|
-| `docs/old-architecture.md` | 3.1KB | 8 months ago | 0 | Archive or delete |
-| `docs/prototype-notes.md` | 892B | 6 months ago | 2 | Extract useful content, then archive |
-| `docs/temp-analysis.md` | 1.5KB | 2 months ago | 0 | Review for integration or deletion |
-
-**Recommended Actions**:
-1. Archive 2 outdated files to `docs/archive/YYYY-MM/`
-2. Extract 1 file's useful content into active docs, then delete
-3. Link 0 files from main documentation index
-
----
-
-## 3. Taxonomy Violations
-
-Content in incorrect directories:
-
-| File | Current Location | Detected Type | Correct Location | Confidence |
-|------|------------------|---------------|------------------|------------|
-| `docs/design/weekly-sync-2024-11.md` | `design/` | Meeting notes | `meeting-notes/2024-11/` | 95% |
-| `docs/guides/system-architecture.md` | `guides/` | Design spec | `design/architecture.md` | 87% |
-| `docs/config-options.md` | `docs/` (root) | Reference | `docs/reference/configuration.md` | 92% |
-
----
-
-## 4. Broken Links
-
-| Source File | Line | Broken Link | Issue | Suggested Fix |
-|-------------|------|-------------|-------|---------------|
-| `docs/README.md` | 15 | `./setup.md` | File deleted | Update to `./guides/getting-started.md` |
-| `docs/api/users.md` | 42 | `../models/user.md` | File moved | Change to `../database/models/user.md` |
-| `docs/guides/deployment.md` | 78 | `https://old-wiki.internal/deploy` | Dead link | Remove or update to new wiki URL |
-
-**Auto-fixable**: [n] links
-**Manual review needed**: [n] links
-
----
-
-## 5. Missing Cross-References
-
-Related documents that should reference each other:
-
-| Document 1 | Document 2 | Relationship | Recommended Link |
-|------------|------------|--------------|------------------|
-| `docs/api/authentication.md` | `docs/security/token-lifecycle.md` | Token management details | Add "See also: Token Lifecycle" section |
-| `docs/database/schema.md` | `docs/api/data-models.md` | Schema ↔ API models | Bidirectional links in both docs |
-| `docs/guides/getting-started.md` | `docs/reference/cli-commands.md` | Tutorial → reference | Link to CLI reference in step 3 |
-
----
-
-## 6. Stale Documentation
-
-Files not updated in 6+ months or with outdated references:
-
-| File | Last Modified | Age | Staleness Indicators | Recommendation |
-|------|---------------|-----|---------------------|----------------|
-| `docs/v1-migration.md` | 2024-01-15 | 11 months | References deprecated v1 API | Move to archive (migration complete) |
-| `docs/old-deployment.md` | 2024-02-20 | 10 months | References Heroku (now on AWS) | Delete (replaced by new deployment guide) |
-| `docs/database/legacy-schema.md` | 2024-03-10 | 9 months | Old schema version | Archive with version tag |
-
----
-
-## 7. Proposed Documentation Structure
-
-### Current Structure Issues:
-- 12 files in root `docs/` (should be categorized)
-- 3 overlapping directories (guides/ vs tutorials/)
-- No clear index or navigation
-
-### Recommended Structure:
-
-```
-docs/
-├── README.md                          # Main index with links to all sections
-│
-├── design/                            # Architecture & Technical Decisions
-│   ├── architecture.md
-│   ├── database-schema.md
-│   └── rfcs/
-│       └── 001-auth-system.md
-│
-├── guides/                            # Step-by-Step Tutorials
-│   ├── getting-started.md
-│   ├── authentication.md
-│   ├── deployment.md
-│   └── troubleshooting.md
-│
-├── api/                               # API Reference
-│   ├── authentication.md
-│   ├── endpoints/
-│   │   ├── users.md
-│   │   └── organizations.md
-│   └── webhooks.md
-│
-├── reference/                         # Configuration & Options
-│   ├── cli-commands.md
-│   ├── configuration.md
-│   └── environment-variables.md
-│
-├── meeting-notes/                     # Chronological Meeting Records
-│   ├── 2024-11/
-│   └── 2024-12/
-│
-└── archive/                           # Historical Documentation
-    └── 2024-Q1/
-        └── v1-migration.md
-```
-
-**Migration Plan**:
-1. Move 12 root-level files to appropriate subdirectories
-2. Merge `guides/` and `tutorials/` into unified `guides/`
-3. Create `docs/README.md` index with category descriptions
-4. Archive 5 stale documents to `archive/YYYY-QN/`
-
----
-
-## 8. Actionable Next Steps
-
-### Auto-Fixable (Low Risk)
-- [ ] Delete 2 exact duplicate files
-- [ ] Fix 8 broken links with known replacements
-- [ ] Move 3 misplaced files to correct directories
-
-**Command**: Accept auto-fix suggestions for immediate application
-
-### Manual Review Required (Medium Risk)
-- [ ] Merge 3 semantic duplicate pairs (content decisions needed)
-- [ ] Review 4 orphan documents (archive vs integrate)
-- [ ] Validate 6 stale documents (update vs archive)
-
-**Estimated effort**: 2-3 hours
-
-### Structural Improvements (High Value)
-- [ ] Create `docs/README.md` navigation index
-- [ ] Establish documentation taxonomy in CONTRIBUTING.md
-- [ ] Set up automated link checker in CI/CD
-- [ ] Create archive/ directory with versioned historical docs
-
-**Estimated effort**: 4-6 hours
-
----
-
-## 9. Documentation Health Score Calculation
-
-**Score: [72]/100 (Fair)**
-
-Breakdown:
-- **Deduplication** (25 points): 18/25 (2 exact, 3 semantic duplicates)
-- **Link Health** (25 points): 20/25 (8 broken links)
-- **Organization** (20 points): 12/20 (taxonomy violations, no index)
-- **Freshness** (15 points): 10/15 (5 stale docs)
-- **Cross-References** (15 points): 12/15 (missing strategic links)
-
-**Target Score**: 90+ (Excellent)
-**Improvement Path**: Fix duplicates and links (+15), create index (+5), archive stale docs (+5)
-
----
-
-## Appendix: Audit Methodology
-
-- **Exact duplicates**: SHA-256 content hash comparison
-- **Near duplicates**: Levenshtein distance on normalized text (lowercase, no whitespace)
-- **Semantic duplicates**: LLM-based concept similarity analysis
-- **Link graph**: Regex extraction of markdown links + validation against filesystem
-- **Classification**: Content-based categorization using document structure and keywords
-- **Staleness**: Last-modified timestamp + deprecated technology pattern matching
-
-**Tools Used**: grep, find, file hashing, link validation, semantic analysis
-**Audit Duration**: [X minutes/seconds]
+```yaml
+# Detected configuration
+site_name: Movement Chain AI Documentation
+default_language: zh
+languages: [zh, en]
+nav_style: explicit (18 entries)
+plugins: [search, i18n, mermaid2]
 ```
 
 ---
 
-**Post-Audit Prompt**:
+## 2. Translation Coverage
+
+### Summary
+- **Source language (zh)**: 18 files
+- **Target language (en)**: 17 files
+- **Coverage**: 94%
+
+### Missing Translations
+
+| Source (zh) | Action Required |
+|-------------|-----------------|
+| decisions/0007-new-feature.md | Create en/decisions/0007-new-feature.md |
+
+### Translation Freshness
+
+| File | zh Modified | en Modified | Status |
+|------|-------------|-------------|--------|
+| architecture/overview.md | 2024-11-01 | 2024-10-15 | ⚠️ zh newer |
+
+---
+
+## 3. Navigation Analysis
+
+### Nav Structure
 ```
-Documentation audit complete. Detected [n] issues across [m] files.
+首页 (1 page)
+├── 架构 (4 pages)
+├── 决策记录 (7 pages)
+└── 资源 (6 pages)
+```
+
+### Orphan Files (not in nav)
+| File | Age | Recommendation |
+|------|-----|----------------|
+| docs/zh/drafts/wip.md | 3 days | Keep as draft |
+
+### Broken Nav Entries
+None detected ✅
+
+---
+
+## 4. Duplicate Analysis
+
+### Same-Language Duplicates
+| Similarity | Files | Recommendation |
+|------------|-------|----------------|
+| 87% | zh/arch/flow.md ↔ zh/resources/data.md | Differentiate or merge |
+
+### Translation Pairs (Excluded)
+18 translation pairs correctly identified and excluded.
+
+---
+
+## 5. Link Health
+
+### Internal Links
+- ✅ Valid: 45
+- ❌ Broken: 3
+
+| Source | Line | Broken Link | Suggested Fix |
+|--------|------|-------------|---------------|
+| zh/index.md | 12 | ./setup.md | ./guides/setup.md |
+
+### External Links
+12 external links found. Run `markdown-link-check` for validation.
+
+---
+
+## 6. ADR Health
+
+**Total ADRs**: 6
+**Next Number**: 0007
+**Sequence**: ✅ Complete (no gaps)
+
+| ADR | Title | Status | Age |
+|-----|-------|--------|-----|
+| 0001 | Multi-Repo Structure | 已接受 | 3 months |
+| 0006 | ONNX Runtime | 已接受 | 2 weeks |
+
+---
+
+## 7. Stale Content
+
+Files not modified in 6+ months:
+
+| File | Last Modified | Assessment |
+|------|---------------|------------|
+| zh/resources/old-comparison.md | 8 months | Review for relevance |
+
+---
+
+## 8. Recommended Actions
+
+### Immediate (High Priority)
+- [ ] Fix 3 broken internal links
+- [ ] Translate 1 missing file to English
+
+### Short-term (Medium Priority)
+- [ ] Review duplicate content pair for merge
+- [ ] Update 1 stale resource file
+
+### Maintenance
+- [ ] Run `mkdocs build --strict` before each deploy
+- [ ] Add markdown-link-check to CI pipeline
+
+---
+
+## 9. Build Commands
+
+```bash
+# Validate build
+mkdocs build --strict
+
+# Local preview
+mkdocs serve
+
+# Check links
+markdown-link-check docs/**/*.md
+```
+
+---
+
+## Health Score Calculation
+
+**Score: 82/100 (Good)**
+
+| Category | Max | Score | Notes |
+|----------|-----|-------|-------|
+| Translation Coverage | 25 | 23 | 94% coverage |
+| Navigation | 20 | 20 | No orphans or breaks |
+| Link Health | 20 | 14 | 3 broken links |
+| Duplicates | 15 | 12 | 1 duplicate pair |
+| Freshness | 10 | 7 | 1 stale file |
+| ADR Health | 10 | 10 | Perfect sequence |
+
+**Target**: 90+ (Excellent)
+**Path**: Fix links (+6), translate missing file (+2)
+```
+
+---
+
+## Post-Audit Prompt
+
+```
+MkDocs documentation audit complete.
+
+Health Score: [score]/100 ([rating])
+Issues Found: [count]
 
 What would you like to do?
 
-1. **Auto-fix low-risk issues** (duplicates, broken links, file moves)
-   → I'll show a preview of all changes before applying
-
-2. **Generate docs/README.md navigation index**
-   → Creates categorized table of contents
-
-3. **Create archive/ and move stale documents**
-   → Preserves history, cleans active docs
-
-4. **Export detailed report**
-   → Save as docs/audit-reports/YYYY-MM-DD-audit.md
-
-5. **Focus on specific issue type**
-   → Re-run for duplicates only, orphans only, etc.
+1. **Fix broken links** — Show suggested fixes for 3 broken links
+2. **Generate translation stubs** — Create placeholder files for missing translations
+3. **Review duplicates** — Show side-by-side comparison
+4. **Validate build** — Run mkdocs build --strict
+5. **Export report** — Save to docs/audit-reports/YYYY-MM-DD.md
 
 Please specify action number or provide custom instructions.
 ```

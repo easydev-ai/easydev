@@ -1,202 +1,181 @@
----
-disable-model-invocation: true
----
+# easydev
 
-# InsightureAI Claude Commands
+> Developer productivity toolkit for Claude Code — research, design-sync, documentation, and workflow automation.
 
-> **Design-doc-driven development toolkit for tech leads**
-
-A curated set of Claude Code commands focused on what tech leads actually need: planning, reviewing against specs, documentation hygiene, and team workflows.
+A focused plugin with 6 essential commands that complement (not duplicate) official Anthropic plugins.
 
 ## Philosophy
 
-- **Design doc compliance** — Bidirectional sync between code and specs
-- **Documentation hygiene** — Find duplicates, capture ideas, keep docs clean
-- **Framework-agnostic** — Works with any stack, not opinionated about Rails/React/etc
-- **Focused, not exhaustive** — Commands that matter, not 57 you'll never use
+- **Complement, don't compete** — Use official plugins for code review, feature development, commits. This plugin fills the gaps.
+- **Smart auto-detection** — Commands detect MkDocs, i18n, and project structure automatically.
+- **Code is truth** — Every command treats code as the source of truth, not assumptions.
+- **Parallel by default** — Research and auditing spawn multiple sub-agents for speed.
 
 ## Installation
 
-```bash
-# Clone to Claude's commands directory
-git clone https://github.com/insightureAI/claude-commands.git ~/.claude/commands
-
-# Restart Claude Code to pick up new commands
-```
-
-### Update
+### From Marketplace
 
 ```bash
-cd ~/.claude/commands && git pull
+# Add the easydev-ai marketplace
+/plugin marketplace add easydev-ai/easydev
+
+# Install the plugin
+/plugin install easydev@easydev-ai
 ```
 
-## Workflow: Idea → Design → Code → Ship
+### Manual Installation
 
+```bash
+# Clone to your plugins directory
+git clone https://github.com/easydev-ai/easydev ~/.claude/plugins/easydev
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           IDEATION PHASE                                     │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  1. QUICK IDEA                        2. DEEP DISCUSSION                    │
-│     ↓                                    ↓                                  │
-│  /docs-capture-mkdocs                 [Have conversation with AI]           │
-│  "Use ONNX for edge inference"           ↓                                  │
-│     ↓                                 /docs-synthesize-mkdocs               │
-│  Creates: docs/zh/decisions/0007-*       ↓                                  │
-│                                       Creates: structured design doc         │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           DESIGN PHASE                                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  3. REFINE DESIGN DOC                                                       │
-│     - Review generated doc                                                  │
-│     - Add details, constraints, requirements                                │
-│     - Get team feedback                                                     │
-│     ↓                                                                       │
-│  Design doc ready: docs/zh/architecture/feature-x.md                        │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         IMPLEMENTATION PHASE                                 │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  4. IMPLEMENT CODE                                                          │
-│     "Implement the feature described in docs/zh/architecture/feature-x.md"  │
-│     ↓                                                                       │
-│  AI writes code based on design doc                                         │
-│                                                                             │
-│  5. SYNC CHECK                                                              │
-│     ↓                                                                       │
-│  /design-sync docs/zh/architecture/feature-x.md                             │
-│     ↓                                                                       │
-│  Reports misalignments, asks: "Which is correct? Code or Doc?"              │
-│     ↓                                                                       │
-│  You answer → AI fixes the appropriate side                                 │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           REVIEW PHASE                                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  6. CODE QUALITY REVIEW                                                     │
-│     ↓                                                                       │
-│  /review                                                                    │
-│     ↓                                                                       │
-│  Security, Performance, Architecture, Code Quality checks                   │
-│     ↓                                                                       │
-│  Fix any issues found                                                       │
-│                                                                             │
-│  7. PR & SHIP                                                               │
-│     ↓                                                                       │
-│  /pr-enhance                                                                │
-│     ↓                                                                       │
-│  Auto-generate PR description → Merge                                       │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    ↓
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          MAINTENANCE PHASE                                   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  8. PERIODIC AUDIT                                                          │
-│     ↓                                                                       │
-│  /docs-audit-mkdocs                                                         │
-│     ↓                                                                       │
-│  Find orphan docs, outdated content, missing translations                   │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+
+Restart Claude Code after installation.
 
 ## Commands
 
-### Core Workflow
+| Command | Description | Use When |
+|---------|-------------|----------|
+| `/easydev:research` | Deep research + codebase investigation with parallel sub-agents | "Is X applicable to us?" "Why is Y breaking?" |
+| `/easydev:design-sync` | Bidirectional code ↔ design doc alignment | Code and spec have drifted apart |
+| `/easydev:docs-audit` | Audit docs for duplicates, orphans, broken links (auto-detects MkDocs) | Documentation cleanup needed |
+| `/easydev:synthesize` | Distill conversation into structured documentation | Long discussion needs to become permanent docs |
+| `/easydev:standup` | Generate standup notes from git activity | Daily standup prep |
+| `/easydev:onboard` | Generate comprehensive onboarding documentation | New team member joining |
 
-| Command | Purpose | Example |
-|---------|---------|---------|
-| `/research-evaluate <question>` | Deep research + codebase investigation with parallel sub-agents | `/research-evaluate Is API Gateway HTTP API applicable to us?` |
-| `/plan <feature>` | Idea → actionable implementation plan | `/plan Add OAuth2 with JWT tokens` |
-| `/review` | 4-perspective code quality review | `/review` |
-| `/design-sync <doc>` | Bidirectional code ↔ design doc alignment | `/design-sync docs/specs/auth.md` |
-| `/standup [days]` | Git activity → standup notes | `/standup` or `/standup 3` |
-| `/subagents <tasks>` | Execute multiple tasks in parallel | `/subagents "Fix auth" "Add tests"` |
+## Command Details
 
-### Documentation (Generic)
+### `/easydev:research <question> [code-paths...]`
 
-| Command | Purpose | Example |
-|---------|---------|---------|
-| `/docs-audit` | Find duplicates, orphans, broken links | `/docs-audit docs/` |
-| `/docs-capture <idea>` | Quick capture idea → structured doc | `/docs-capture Use Kalman filter` |
-| `/docs-synthesize` | Distill conversation → structured doc | `/docs-synthesize` |
-
-### Documentation (MkDocs)
-
-For MkDocs-based documentation sites with i18n support:
-
-| Command | Purpose | Example |
-|---------|---------|---------|
-| `/docs-audit-mkdocs` | Audit with translation coverage, nav awareness | `/docs-audit-mkdocs` |
-| `/docs-capture-mkdocs <idea>` | Quick capture with ADR numbering, zh default | `/docs-capture-mkdocs Use ONNX` |
-| `/docs-synthesize-mkdocs` | Conversation → doc with ADR format, Mermaid | `/docs-synthesize-mkdocs` |
-
-### Code Quality
-
-| Command | Purpose | Example |
-|---------|---------|---------|
-| `/tech-debt [path]` | Find and prioritize technical debt | `/tech-debt src/` |
-| `/pr-enhance` | Auto-generate PR description | `/pr-enhance` |
-
-### Team
-
-| Command | Purpose | Example |
-|---------|---------|---------|
-| `/onboard [focus]` | Generate new developer onboarding guide | `/onboard backend` |
-
-## What Makes This Different
-
-### Bidirectional Design Sync
-
-Code and docs drift apart. Traditional tools assume the doc is always right. We ask:
+Your most powerful research tool. Spawns parallel sub-agents to investigate:
 
 ```bash
-/design-sync docs/specs/auth.md
+# Research a technology
+/easydev:research Is API Gateway HTTP API applicable to our lambda/processor?
+
+# Investigate a bug
+/easydev:research Why are transcriptions failing for large files? src/services/audio/ --mode investigate
+
+# Compare options
+/easydev:research Should we switch from REST to GraphQL?
 ```
 
-Output:
+**Modes:**
+- `research` — External research, technology evaluation
+- `investigate` — Deep codebase analysis, dependency mapping
+- `auto` (default) — Intelligently combines both
+
+**Features:**
+- Parallel sub-agent execution (4+ agents at once)
+- Blast radius analysis for code changes
+- Evidence-based recommendations with sources
+
+---
+
+### `/easydev:design-sync <design-doc-path> [code-path]`
+
+Identifies mismatches between design documents and code, then asks YOU which direction to fix:
+
+```bash
+/easydev:design-sync docs/specs/auth.md src/auth/
+```
+
+**Output:**
 ```markdown
 | # | Design Doc Says | Code Does | Which is Correct? |
 |---|-----------------|-----------|-------------------|
 | 1 | Password reset required | Not implemented | ? |
 | 2 | localStorage tokens | httpOnly cookies | ? |
 
-Respond: "1: doc, 2: code" → I'll fix the appropriate side
+Respond: "1: doc, 2: code" to specify fix direction
 ```
 
-### Conversation Synthesis
+**Why this is unique:** Most tools assume the spec is always right. This command recognizes that sometimes code evolved past the spec.
 
-Had a long discussion? Don't lose the insights:
+---
+
+### `/easydev:docs-audit [target-path]`
+
+Smart documentation auditing that auto-detects your documentation system:
 
 ```bash
-/docs-synthesize-mkdocs
+# Audit all docs
+/easydev:docs-audit docs/
+
+# Focus on specific issues
+/easydev:docs-audit --focus duplicates
+/easydev:docs-audit --focus translations --lang zh
 ```
 
-- Prioritizes **later conclusions** over early exploratory thoughts
-- Auto-numbers ADRs (0007, 0008, ...)
-- Generates Mermaid diagrams from architecture discussions
+**Auto-detects:**
+- MkDocs (checks for `mkdocs.yml`) → i18n-aware, nav validation
+- Generic → File-based auditing, duplicate detection
 
-### MkDocs-Aware Auditing
+**Finds:**
+- Duplicate content (exact and semantic)
+- Orphan files (not linked anywhere)
+- Broken internal links
+- Translation gaps (MkDocs mode)
+- Nav mismatches (MkDocs mode)
+
+---
+
+### `/easydev:synthesize`
+
+Distills a conversation into permanent, structured documentation:
 
 ```bash
-/docs-audit-mkdocs
+# After a long discussion
+/easydev:synthesize
+
+# With specific options
+/easydev:synthesize --category decision --title "Authentication Strategy"
 ```
 
-- Recognizes `en/` ↔ `zh/` as translation pairs, not duplicates
-- Reads `mkdocs.yml` nav for orphan detection
-- Reports translation coverage gaps
+**Key feature:** Prioritizes later conclusions over earlier exploration. If you discussed Redis, then MySQL, then decided PostgreSQL — the doc reflects PostgreSQL as the decision.
+
+**Auto-detects:**
+- MkDocs → ADR numbering, i18n folders, nav suggestions
+- Generic → Standard markdown output
+
+---
+
+### `/easydev:standup [days]`
+
+Generates standup notes from git activity:
+
+```bash
+/easydev:standup      # Yesterday's activity
+/easydev:standup 3    # Last 3 days
+```
+
+**Output:**
+```markdown
+*Standup 2025-12-15*
+
+✅ *Done:* Merged OAuth PR #123, fixed token refresh bug
+🔄 *Today:* Password reset flow, integration tests
+🚧 *Blocked:* PR #126 awaiting review (2d)
+```
+
+---
+
+### `/easydev:onboard [--focus setup|architecture|workflows]`
+
+Generates comprehensive onboarding documentation by analyzing your codebase:
+
+```bash
+/easydev:onboard
+/easydev:onboard --focus backend
+```
+
+**Generates:**
+- Tech stack overview
+- Prerequisites and setup instructions
+- Project structure guide
+- Available commands
+- Development workflow
+- Troubleshooting guide
 
 ## Agents
 
@@ -204,40 +183,45 @@ These agents are invoked by commands or can be used directly:
 
 | Agent | Expertise | Invoked By |
 |-------|-----------|------------|
-| `code-reviewer` | Clean code, patterns, testability | `/review` |
-| `security-auditor` | OWASP, auth, secrets, injection | `/review` |
-| `design-compliance` | Requirements tracing, spec coverage | `/design-sync` |
+| `code-reviewer` | Clean code, patterns, testability | Review workflows |
+| `security-auditor` | OWASP, auth, secrets, injection | Security checks |
+| `design-compliance` | Requirements tracing, spec coverage | `/easydev:design-sync` |
 
-## Official Plugins
+## Using with Official Plugins
 
-We recommend using these custom commands alongside official Anthropic plugins for a complete workflow.
+This plugin is designed to work alongside official Anthropic plugins:
 
-See **[PLUGINS.md](PLUGINS.md)** for:
-- All 13 official Claude Code plugins
-- Installation instructions
-- Recommended plugins for our team
-- How plugins complement our custom commands
+| Task | Use Official Plugin | Use easydev |
+|------|---------------------|-------------|
+| Code review | `/code-review:code-review` | — |
+| Feature development | `/feature-dev:feature-dev` | — |
+| Commits & PRs | `/commit-commands:*` | — |
+| **Research & evaluation** | — | `/easydev:research` |
+| **Design-code sync** | — | `/easydev:design-sync` |
+| **Documentation audit** | — | `/easydev:docs-audit` |
+| **Conversation → docs** | — | `/easydev:synthesize` |
+| **Standup notes** | — | `/easydev:standup` |
+| **Onboarding docs** | — | `/easydev:onboard` |
 
-**Quick install (recommended plugins):**
+**Recommended plugin setup:**
 ```bash
-/plugin marketplace add anthropics/claude-code
+# Official plugins
 /plugin install feature-dev@anthropics-claude-code
 /plugin install code-review@anthropics-claude-code
-/plugin install security-guidance@anthropics-claude-code
+/plugin install commit-commands@anthropics-claude-code
+
+# This plugin
+/plugin install easydev@easydev-ai
 ```
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add or modify commands.
 
-## Attribution
-
-Built by [InsightureAI](https://github.com/insightureAI).
-
-Inspired by patterns from:
-- [wshobson/commands](https://github.com/wshobson/commands) (MIT License)
-- [EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin)
-
 ## License
 
 MIT License - see [LICENSE](LICENSE)
+
+---
+
+Built by [EasyDev AI](https://github.com/easydev-ai)

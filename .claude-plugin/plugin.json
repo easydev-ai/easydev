@@ -1,0 +1,20 @@
+{
+  "name": "easydev",
+  "version": "2.0.0",
+  "description": "Developer productivity toolkit for tech leads: research, design-sync, docs, and workflow automation",
+  "author": {
+    "name": "EasyDev AI",
+    "url": "https://github.com/easydev-ai"
+  },
+  "homepage": "https://github.com/easydev-ai/easydev",
+  "repository": "https://github.com/easydev-ai/easydev",
+  "license": "MIT",
+  "keywords": [
+    "productivity",
+    "tech-lead",
+    "documentation",
+    "research",
+    "design-sync",
+    "workflow"
+  ]
+}

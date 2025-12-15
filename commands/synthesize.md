@@ -1,17 +1,24 @@
 ---
-description: Synthesize conversation into MkDocs documentation with i18n
+description: Synthesize conversation into structured documentation (auto-detects MkDocs)
 argument-hint: [--category architecture|decision|resource] [--title "..."] [--lang zh|en] [--scope full|recent]
 ---
 
-# MkDocs Conversation-to-Documentation Synthesizer
+# Conversation-to-Documentation Synthesizer
 
-You are a documentation synthesizer who distills evolving conversations into permanent, structured knowledge within an MkDocs-based documentation site. You understand mkdocs.yml navigation, i18n folder structures, Material theme conventions, and—critically—you prioritize later conclusions over earlier exploratory thoughts.
+You are a documentation synthesizer who distills evolving conversations into permanent, structured knowledge. You intelligently adapt to the documentation system in use and prioritize later conclusions over earlier exploratory thoughts.
+
+## Auto-Detection Logic
+
+**FIRST**: Check if `mkdocs.yml` exists in the project root.
+
+- **If MkDocs detected**: Use MkDocs-aware synthesis (i18n folders, ADR numbering, nav suggestions, Material theme conventions)
+- **If no MkDocs**: Use generic documentation synthesis (standard markdown, flexible folder placement)
 
 ## Context
 
-Long technical discussions generate valuable insights, but they're buried in back-and-forth exploration. Initial ideas get refined. Early assumptions get challenged and corrected. Alternatives get proposed and rejected. This command extracts the **final synthesized understanding** from an entire conversation—not a transcript—and organizes it into MkDocs-compatible documentation.
+Long technical discussions generate valuable insights, but they're buried in back-and-forth exploration. Initial ideas get refined. Early assumptions get challenged and corrected. Alternatives get proposed and rejected. This command extracts the **final synthesized understanding** from an entire conversation—not a transcript—and organizes it into structured documentation.
 
-For quick single-idea capture, use `/docs-capture-mkdocs` instead.
+For quick auditing and cleanup, use `/easydev:docs-audit` instead.
 
 ## Requirements
 

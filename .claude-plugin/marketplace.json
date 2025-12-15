@@ -1,0 +1,24 @@
+{
+  "name": "easydev-ai",
+  "owner": {
+    "name": "EasyDev AI",
+    "url": "https://github.com/easydev-ai"
+  },
+  "plugins": [
+    {
+      "name": "easydev",
+      "source": "./",
+      "description": "Developer productivity toolkit for tech leads: research, design-sync, docs, and workflow automation",
+      "version": "2.0.0",
+      "category": "productivity",
+      "keywords": [
+        "productivity",
+        "tech-lead",
+        "documentation",
+        "research",
+        "design-sync",
+        "workflow"
+      ]
+    }
+  ]
+}

@@ -1,109 +1,146 @@
----
-disable-model-invocation: true
----
+# Contributing to easydev
 
-# Contributing to InsightureAI Claude Commands
+## Project Structure
+
+```
+easydev/
+├── .claude-plugin/
+│   ├── plugin.json           # Plugin manifest
+│   └── marketplace.json      # Marketplace configuration
+├── commands/                  # Slash commands (6 total)
+│   ├── research.md
+│   ├── design-sync.md
+│   ├── docs-audit.md
+│   ├── synthesize.md
+│   ├── standup.md
+│   └── onboard.md
+├── agents/                    # Sub-agents (3 total)
+│   ├── code-reviewer.md
+│   ├── security-auditor.md
+│   └── design-compliance.md
+├── README.md
+├── CONTRIBUTING.md
+├── CHANGELOG.md
+└── LICENSE
+```
 
 ## Adding a New Command
 
-### 1. Create the Command File
+### 1. Before Adding: Check Philosophy
+
+We intentionally keep commands minimal. Before adding:
+
+1. **Does an official plugin do this?** → Don't add, recommend the official one
+2. **Does an existing command cover this?** → Extend that command instead
+3. **Is this unique value we provide?** → Proceed with adding
+
+### 2. Create the Command File
 
 ```bash
 touch commands/your-command.md
 ```
 
-### 2. Use This Template
+### 3. Use This Template
 
 ```markdown
 ---
-model: claude-sonnet-4-0
+description: One-line description (shown in /easydev:help)
+argument-hint: [required-arg] [--optional-flag]
 ---
 
-# /your-command
+# Command Name
 
-**Purpose**: One-line description of what this command does
+You are [role description]. Your expertise includes [capabilities].
 
-**Usage**:
-\`\`\`bash
-/your-command <required-arg> [optional-arg]
-\`\`\`
+## Context
 
-## What It Does
+[When this command is useful]
 
-1. Step one
-2. Step two
-3. Step three
+## Auto-Detection Logic (if applicable)
 
-## Implementation
+**FIRST**: Check if [condition].
 
-[Use extended thinking for complex analysis]
+- **If detected**: [behavior]
+- **If not detected**: [alternative behavior]
 
-### Step 1: Gather Context
+## Requirements
 
-- Read relevant files
-- Search codebase for patterns
+$ARGUMENTS
 
-### Step 2: Process
+## Instructions
 
-- Apply logic
-- Generate output
+### 1. [First Phase]
+[What to do]
 
-### Step 3: Output
+### 2. [Second Phase]
+[What to do]
 
-Present results in this format:
+## Output Format
 
-\`\`\`markdown
-# Your Command Output
-
-## Section 1
-...
-
-## Section 2
-...
-\`\`\`
-
-## Options
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--flag` | What it does | `false` |
+[Markdown template for output]
 ```
 
-### 3. Test Your Command
+### 4. Test Your Command
 
 ```bash
-# In Claude Code, run:
-/your-command test-input
+# In Claude Code with the plugin installed
+/easydev:your-command test-input
 ```
 
-### 4. Submit PR
+### 5. Submit PR
 
-- Add entry to CHANGELOG.md
-- Update README.md command table
-- Create PR with description of use case
+- Update CHANGELOG.md with the new command
+- Explain the unique value in PR description
+- Include example usage
 
 ## Modifying Existing Commands
 
-1. Read the current command file
+1. Read the current command file thoroughly
 2. Make your changes
-3. Test thoroughly
+3. Test with real scenarios
 4. Submit PR with before/after examples
 
-## Command Naming Conventions
+## Adding an Agent
 
-- Use kebab-case: `docs-audit`, `tech-debt`
-- Be descriptive but concise
-- Avoid abbreviations unless universally understood
+Agents live in `agents/` and are invoked by commands or directly.
 
-## Agent Guidelines
+### Template
 
-Agents in `agents/` are specialized reviewers. When creating:
+```markdown
+# Agent Name
 
-1. Define clear expertise area
-2. List specific checks performed
-3. Provide output format template
-4. Include severity classification
+You are [expertise description].
+
+## Context
+
+[When this agent is invoked]
+
+## Instructions
+
+### 1. [Category of Checks]
+[Specific checks to perform]
+
+### 2. [Category of Checks]
+[Specific checks to perform]
+
+## Output Format
+
+[Severity-rated findings template]
+```
+
+## Naming Conventions
+
+- **Commands**: kebab-case in filename: `docs-audit.md` → `/easydev:docs-audit`
+- **Agents**: kebab-case in filename: `code-reviewer.md`
+- **Descriptions**: Start with verb, be concise
+
+## Code Style
+
+- Keep frontmatter minimal
+- Use `$ARGUMENTS` to reference command arguments
+- Include clear output format templates
+- Add auto-detection logic when behavior differs by context
 
 ## Questions?
 
-Open an issue or ask in team Slack.
+Open an issue at [github.com/easydev-ai/easydev/issues](https://github.com/easydev-ai/easydev/issues)
