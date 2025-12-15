@@ -4,6 +4,17 @@ All notable changes to easydev will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.0] - 2025-12-15
+
+### Added
+- **`/easydev:docs-refresh`** — Batch-update documentation to match current code state
+  - Parallel sub-agents for API docs, setup docs, architecture, tutorials
+  - Staleness detection with severity levels (Critical, Stale, Fresh)
+  - Surgical updates that preserve human-written context
+  - Auto-detects MkDocs for i18n-aware updates
+
+---
+
 ## [2.0.0] - 2025-12-15 — Major Restructuring
 
 ### Breaking Changes
@@ -89,6 +100,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 2.1.0 | 2025-12-15 | Added `/easydev:docs-refresh` for batch documentation updates |
 | 2.0.0 | 2025-12-15 | Major restructuring: 16→6 commands, plugin format, easydev branding |
 | 1.1.0 | 2025-12-10 | Added MkDocs variants, research-evaluate, subagents |
 | 1.0.0 | 2025-12-05 | Initial release with 8 commands, 3 agents |

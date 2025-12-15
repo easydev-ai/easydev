@@ -2,7 +2,7 @@
 
 > Developer productivity toolkit for Claude Code — research, design-sync, documentation, and workflow automation.
 
-A focused plugin with 6 essential commands that complement (not duplicate) official Anthropic plugins.
+A focused plugin with 7 essential commands that complement (not duplicate) official Anthropic plugins.
 
 ## Philosophy
 
@@ -39,6 +39,7 @@ Restart Claude Code after installation.
 | `/easydev:research` | Deep research + codebase investigation with parallel sub-agents | "Is X applicable to us?" "Why is Y breaking?" |
 | `/easydev:design-sync` | Bidirectional code ↔ design doc alignment | Code and spec have drifted apart |
 | `/easydev:docs-audit` | Audit docs for duplicates, orphans, broken links (auto-detects MkDocs) | Documentation cleanup needed |
+| `/easydev:docs-refresh` | Batch-update docs to match current code state | Code changed, docs are stale |
 | `/easydev:synthesize` | Distill conversation into structured documentation | Long discussion needs to become permanent docs |
 | `/easydev:standup` | Generate standup notes from git activity | Daily standup prep |
 | `/easydev:onboard` | Generate comprehensive onboarding documentation | New team member joining |
@@ -117,6 +118,43 @@ Smart documentation auditing that auto-detects your documentation system:
 - Broken internal links
 - Translation gaps (MkDocs mode)
 - Nav mismatches (MkDocs mode)
+
+---
+
+### `/easydev:docs-refresh [docs-path] [code-path]`
+
+Batch-update documentation to match the current code state:
+
+```bash
+# Scan and update all docs
+/easydev:docs-refresh
+
+# Focus on specific areas
+/easydev:docs-refresh docs/api src/routes --scope critical
+
+# Scan only (no changes)
+/easydev:docs-refresh --mode scan
+```
+
+**Modes:**
+- `scan` — Report staleness only, don't propose changes
+- `update` — Propose and apply changes with approval
+- `auto` (default) — Scan first, then offer to update
+
+**Scopes:**
+- `all` — Check every doc against code
+- `stale` (default) — Only docs that appear outdated
+- `critical` — Only docs with breaking inaccuracies
+
+**How it works:**
+1. Maps documentation structure (auto-detects MkDocs)
+2. Maps code exports, routes, configs, env vars
+3. Spawns parallel agents to compare docs vs code
+4. Reports staleness with severity (🔴 Critical, 🟡 Stale, 🟢 Fresh)
+5. Proposes surgical updates (preserves human context)
+6. Applies changes only with your approval
+
+**Key principle:** Code is truth. When docs and code conflict, code wins (unless it's a bug).
 
 ---
 
@@ -199,6 +237,7 @@ This plugin is designed to work alongside official Anthropic plugins:
 | **Research & evaluation** | — | `/easydev:research` |
 | **Design-code sync** | — | `/easydev:design-sync` |
 | **Documentation audit** | — | `/easydev:docs-audit` |
+| **Docs ← code sync** | — | `/easydev:docs-refresh` |
 | **Conversation → docs** | — | `/easydev:synthesize` |
 | **Standup notes** | — | `/easydev:standup` |
 | **Onboarding docs** | — | `/easydev:onboard` |
