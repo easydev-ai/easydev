@@ -208,6 +208,24 @@ These agents are invoked by commands or can be used directly:
 | `security-auditor` | OWASP, auth, secrets, injection | `/review` |
 | `design-compliance` | Requirements tracing, spec coverage | `/design-sync` |
 
+## Official Plugins
+
+We recommend using these custom commands alongside official Anthropic plugins for a complete workflow.
+
+See **[PLUGINS.md](PLUGINS.md)** for:
+- All 13 official Claude Code plugins
+- Installation instructions
+- Recommended plugins for our team
+- How plugins complement our custom commands
+
+**Quick install (recommended plugins):**
+```bash
+/plugin marketplace add anthropics/claude-code
+/plugin install feature-dev@anthropics-claude-code
+/plugin install code-review@anthropics-claude-code
+/plugin install security-guidance@anthropics-claude-code
+```
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add or modify commands.
