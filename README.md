@@ -242,16 +242,46 @@ This plugin is designed to work alongside official Anthropic plugins:
 | **Standup notes** | — | `/easydev:standup` |
 | **Onboarding docs** | — | `/easydev:onboard` |
 
-**Recommended plugin setup:**
+### LSP Prerequisites (Recommended)
+
+LSP (Language Server Protocol) gives Claude Code semantic code understanding — go-to-definition, find references, and accurate refactoring. Install the language server binaries first:
+
 ```bash
-# Official plugins
-/plugin install feature-dev@anthropics-claude-code
-/plugin install code-review@anthropics-claude-code
-/plugin install commit-commands@anthropics-claude-code
+# TypeScript/JavaScript (vtsls)
+npm install -g @vtsls/language-server typescript
+
+# Python (Pyright)
+pip install pyright
+
+# Vue (optional)
+npm install -g @vue/language-server
+```
+
+Then enable the LSP tool in your shell profile (`~/.zshrc` or `~/.bashrc`):
+
+```bash
+export ENABLE_LSP_TOOL=1
+```
+
+> **Why separate installs?** Plugins are just configuration files that tell Claude Code *how* to connect to language servers. The actual language server binaries must be installed on your machine. See [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) for details.
+
+### Recommended Plugin Setup
+
+```bash
+# Official LSP plugins (code intelligence)
+claude plugin install typescript-lsp@claude-plugins-official
+claude plugin install pyright-lsp@claude-plugins-official
+
+# Official workflow plugins
+claude plugin install feature-dev@claude-code-plugins
+claude plugin install code-review@claude-code-plugins
+claude plugin install commit-commands@claude-code-plugins
 
 # This plugin
-/plugin install easydev@easydev-ai
+claude plugin install easydev@easydev-ai
 ```
+
+Restart Claude Code after installing plugins.
 
 ## Contributing
 

@@ -4,6 +4,17 @@ All notable changes to easydev will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.1] - 2025-12-20
+
+### Changed
+- **README**: Added LSP prerequisites section for developer onboarding
+  - TypeScript/JavaScript (vtsls), Python (Pyright), Vue language server installation
+  - `ENABLE_LSP_TOOL=1` environment variable configuration
+  - Link to [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) for official LSP plugins
+- **README**: Updated "Recommended Plugin Setup" with official LSP plugins (`typescript-lsp`, `pyright-lsp`)
+
+---
+
 ## [2.1.0] - 2025-12-15
 
 ### Added
@@ -100,6 +111,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 2.1.1 | 2025-12-20 | Added LSP prerequisites & official plugin setup in README |
 | 2.1.0 | 2025-12-15 | Added `/easydev:docs-refresh` for batch documentation updates |
 | 2.0.0 | 2025-12-15 | Major restructuring: 16→6 commands, plugin format, easydev branding |
 | 1.1.0 | 2025-12-10 | Added MkDocs variants, research-evaluate, subagents |
